@@ -8,30 +8,96 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirMACDsigConadjclose9(df)
     df = anadirMACDhistConadjclose9(df)
 
+    df=anadirRSIConvol14(df)
+    df=anadirMACDConvol9(df)
+    df = anadirMACDConvol9(df)
+    df = anadirMACDsigConvol9(df)
+    df = anadirMACDhistConvol9(df)
+
+    df = anadiradjcloselag1(df)
+    df = anadiradjcloselag2(df)
+    df = anadiradjcloselag3(df)
+
+    df = anadirvolumelag1(df)
+    df = anadirvolumelag2(df)
+    df = anadirvolumelag3(df)
     return df
 
 def anadirRSIConadjclose14(dataframe):
     df=dataframe
-    df['RSI14'] = computeRSI(dataframe['adjclose'], 14)
+    df['adjcloseRSI14'] = computeRSI(dataframe['adjclose'], 14)
     return df
 
 def anadirMACDConadjclose9(dataframe):
     df=dataframe
     # FastEMA = 12 period EMA from closing price
     # SlowEMA = 26 period EMA from closing price
-    df['MACD9'] = computeMACD(dataframe['adjclose'], 12, 26, 9)
+    df['adjcloseMACD9'] = computeMACD(dataframe['adjclose'], 12, 26, 9)
     return df
 
 def anadirMACDsigConadjclose9(dataframe):
     df=dataframe
-    df['MACDsig9'] = computeMACDsig(dataframe['adjclose'], 12, 26, 9)
+    df['adjcloseMACDsig9'] = computeMACDsig(dataframe['adjclose'], 12, 26, 9)
     return df
 
 def anadirMACDhistConadjclose9(dataframe):
     df=dataframe
-    df['MACDhist9'] = computeMACDhist(dataframe['adjclose'], 12, 26, 9)
+    df['adjcloseMACDhist9'] = computeMACDhist(dataframe['adjclose'], 12, 26, 9)
     return df
 
+
+def anadirRSIConvol14(dataframe):
+    df=dataframe
+    df['volumeRSI14'] = computeRSI(dataframe['volume'], 14)
+    return df
+
+def anadirMACDConvol9(dataframe):
+    df=dataframe
+    # FastEMA = 12 period EMA from closing price
+    # SlowEMA = 26 period EMA from closing price
+    df['volumeMACD9'] = computeMACD(dataframe['volume'], 12, 26, 9)
+    return df
+
+def anadirMACDsigConvol9(dataframe):
+    df=dataframe
+    df['volumeMACDsig9'] = computeMACDsig(dataframe['volume'], 12, 26, 9)
+    return df
+
+def anadirMACDhistConvol9(dataframe):
+    df=dataframe
+    df['volumeMACDhist9'] = computeMACDhist(dataframe['volume'], 12, 26, 9)
+    return df
+
+def anadiradjcloselag1(dataframe):
+    df = dataframe
+    df['adjcloselag1'] = computelag(dataframe['adjclose'], 1)
+    return df
+
+def anadiradjcloselag2(dataframe):
+    df = dataframe
+    df['adjcloselag2'] = computelag(dataframe['adjclose'], 2)
+    return df
+
+def anadiradjcloselag3(dataframe):
+    df = dataframe
+    df['adjcloselag3'] = computelag(dataframe['adjclose'], 3)
+    return df
+
+
+def anadirvolumelag1(dataframe):
+    df = dataframe
+    df['volumelag1'] = computelag(dataframe['volume'], 1)
+    return df
+
+def anadirvolumelag2(dataframe):
+    df = dataframe
+    df['volumelag2'] = computelag(dataframe['volume'], 2)
+    return df
+
+def anadirvolumelag3(dataframe):
+    df = dataframe
+    df['volumelag3'] = computelag(dataframe['volume'], 3)
+    return df
 
 # Calculadora de RSI
 def computeRSI(data, time_window):
@@ -85,3 +151,7 @@ def computeMACDhist(data, n_fast, n_slow, n_smooth):
 # Calculadora de rentabilidad media leyendo el parámetro INCREMENTO
 def computeRentabilidadMediaFromIncremento(data):
     return data.loc[:, 'INCREMENTO'].mean()
+
+def computelag(data, lag):
+    # Variación en porcentaje
+    return 100*(data-data.shift(lag))/data

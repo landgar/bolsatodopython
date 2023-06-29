@@ -47,7 +47,7 @@ def creaModelo(filepathModeloAGuardar):
 
     # Se valida el modelo con datos independientes
     X_valid, y_valid = limpiaDatosParaUsarModelo(datosValidacion)
-    y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=0.8, analizarResultado=True,
+    y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=0.5, analizarResultado=True,
                                                     y_solucionParaAnalisis=y_valid,
                                                     mensajeDebug="Análisis con datos INDEPENDIENTES (VALIDACIÓN) y usando la proba para predecir: ")
 

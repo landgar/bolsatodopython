@@ -47,7 +47,7 @@ def predecir(pathModelo):
 
     # Se valida el modelo con datos independientes
     X_valid, y_valid = limpiaDatosParaUsarModelo(datos)
-    y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=0.8, analizarResultado=False)
+    y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=0.5, analizarResultado=False)
 
     # Análisis de sólo las filas donde invertir
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]

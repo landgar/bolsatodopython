@@ -30,7 +30,8 @@ def procesaInformacion(carpetaEntrada, nombreFicheroCsvEntrada, carpetaSalida, n
     datos.describe()
 
     # DEBUG:
-    print("Número de NaN por columna del fichero: ", datos.isnull().sum())
+    print("Número de NaN por columna del fichero: ")
+    print(datos.isnull().sum())
 
     # Se almacena el fichero avanzado con target
     guardarDataframeEnCsv(dataframe=datos, filepath=carpetaSalida+nombreFicheroCsvSalida)

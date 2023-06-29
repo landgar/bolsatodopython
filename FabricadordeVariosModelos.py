@@ -30,7 +30,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
     params = {'objective': 'binary',
-              'learning_rate': 0.02,
+              'learning_rate': 0.01,
               "boosting_type": "gbdt",
               "metric": metrica,
               'n_jobs': -1,
@@ -89,8 +89,11 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     calculaPrecision(y_test, y_pred_test)
 
     # DEBUG:
-    pred, proba=predictorConProba(model, X_test, umbralProba=0.8, analizarResultado=True, y_solucionParaAnalisis=y_test,
-                      mensajeDebug="Análisis en la creación el modelo mirando la probabilidad de TARGET==1 y filtrando por proba:")
+    umbral = 0.5
+    pred, proba = predictorConProba(model, X_test, umbralProba=umbral, analizarResultado=True,
+                                    y_solucionParaAnalisis=y_test,
+                                    mensajeDebug="Análisis en la creación el modelo mirando la probabilidad de TARGET==1 y filtrando por proba: " + str(
+                                        umbral))
 
     return model
 
@@ -192,6 +195,5 @@ def predictorConProba(modelo, X, umbralProba=0.8, analizarResultado=False, y_sol
         print('Precision score: {0:0.4f}'.format(precision_score(auxSoloTarget, aux["pred"])))
         print('Recall score: {0:0.4f}'.format(recall_score(auxSoloTarget, aux["pred"])))
         calculaPrecision(auxSoloTarget, aux["pred"])
-
 
     return aux["pred"], aux["proba"]
