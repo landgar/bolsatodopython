@@ -150,7 +150,7 @@ def computeMACDhist(data, n_fast, n_slow, n_smooth):
 
 # Calculadora de rentabilidad media leyendo el parámetro INCREMENTO
 def computeRentabilidadMediaFromIncremento(data):
-    return data.loc[:, 'INCREMENTO'].mean()
+    return data['INCREMENTO'].mean()
 
 def computelag(data, lag):
     # Variación en porcentaje

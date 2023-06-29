@@ -25,14 +25,6 @@ def procesaInformacion(carpetaEntrada, nombreFicheroCsvEntrada, carpetaSalida, n
 
     datos=procesaEmpresas(datos)
 
-    # DEBUG:
-    print("Trozo del fichero limpio: ", numFilasPorTicker)
-    datos.describe()
-
-    # DEBUG:
-    print("Número de NaN por columna del fichero: ")
-    print(datos.isnull().sum())
-
     # Se almacena el fichero avanzado con target
     guardarDataframeEnCsv(dataframe=datos, filepath=carpetaSalida+nombreFicheroCsvSalida)
 
@@ -41,11 +33,13 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
+    periodo=10
+
     # Se añade el incremento en porcentaje
-    datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=20)
+    datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=15, periodo=20)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
 
     return datos
 
