@@ -1,4 +1,5 @@
 import pandas as pd
+import requests
 
 def anadirParametrosAvanzados(dataframe):
     df=dataframe
@@ -21,6 +22,10 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirvolumelag1(df)
     df = anadirvolumelag2(df)
     df = anadirvolumelag3(df)
+
+    # No se añade porque hace 1 query por cada empresa, y realmente no aporta mejora a la precisión
+    # df = anadirFearAndGreed(df)
+
     return df
 
 def anadirRSIConadjclose14(dataframe):
@@ -99,6 +104,11 @@ def anadirvolumelag3(dataframe):
     df['volumelag3'] = computelag(dataframe['volume'], 3)
     return df
 
+def anadirFearAndGreed(dataframe):
+    df = dataframe
+    df['fearandgeed'] = computeFearAndGreed(dataframe)
+    return df
+
 # Calculadora de RSI
 def computeRSI(data, time_window):
     diff = data.diff(1).dropna()  # diff in one field(one day)
@@ -148,10 +158,26 @@ def computeMACDhist(data, n_fast, n_slow, n_smooth):
     MACDhist = pd.Series(MACD - MACDsig, name='MACDhist')
     return MACDhist
 
-# Calculadora de rentabilidad media leyendo el parámetro INCREMENTO
+# Calculadora de rentabilidad mediana leyendo el parámetro INCREMENTO
 def computeRentabilidadMediaFromIncremento(data):
-    return data['INCREMENTO'].mean()
+    return data['INCREMENTO'].median()
 
 def computelag(data, lag):
     # Variación en porcentaje
     return 100*(data-data.shift(lag))/data
+
+def computeFearAndGreed(data):
+    # Se obtiene el listado de fear and greed index histórico (varios años) hasta hoy
+    r = requests.get('https://api.alternative.me/fng/?limit=0')
+
+    df = pd.DataFrame(r.json()['data'])
+    df.value = df.value.astype(int)
+    df.timestamp = pd.to_datetime(df.timestamp, unit='s')
+    df.set_index(df.timestamp, inplace=True)
+    df.rename(columns={'value': 'fear_greed'}, inplace=True)
+    df['date'] = df['timestamp'].astype(str).str[:10]
+
+    cols = ['date']
+    data2=data
+    data2=data2.join(df.set_index(cols), on=cols)
+    return data2['fear_greed']

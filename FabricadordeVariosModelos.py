@@ -1,4 +1,5 @@
 import lightgbm as lgb
+from imblearn.under_sampling import *
 from sklearn.model_selection import GroupKFold, RepeatedStratifiedKFold, cross_validate, StratifiedShuffleSplit
 from sklearn import metrics
 from sklearn.svm import LinearSVC
@@ -30,7 +31,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
     params = {'objective': 'binary',
-              'learning_rate': 0.01,
+              'learning_rate': 0.02,
               "boosting_type": "gbdt",
               "metric": metrica,
               'n_jobs': -1,

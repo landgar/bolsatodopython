@@ -51,11 +51,11 @@ def creaModelo(filepathModeloAGuardar):
                                                     y_solucionParaAnalisis=y_valid,
                                                     mensajeDebug="Análisis con datos INDEPENDIENTES (VALIDACIÓN) y usando la proba para predecir: ")
 
-    # # Análisis de sólo las filas donde invertir
-    # y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
-    # datos_a_invertir = datosValidacion[datosValidacion.index.isin(y_pred_a_invertir_valid.index)]
-    # rentaMedia_valid = computeRentabilidadMediaFromIncremento(datos_a_invertir)
-    # print("RENTA MEDIA DE VALIDACIÓN: ", rentaMedia_valid)
+    # Análisis de sólo las filas donde invertir
+    y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
+    datos_a_invertir = datosValidacion[datosValidacion.index.isin(y_pred_a_invertir_valid.index)]
+    rentaMedia_valid = computeRentabilidadMediaFromIncremento(datos_a_invertir)
+    print("RENTA MEDIA DE VALIDACIÓN: ", rentaMedia_valid)
 
     joblib.dump(modelo, filepathModeloAGuardar)
 
