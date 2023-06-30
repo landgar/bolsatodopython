@@ -26,6 +26,16 @@ def anadirParametrosAvanzados(dataframe):
     # No se añade porque hace 1 query por cada empresa, y realmente no aporta mejora a la precisión
     # df = anadirFearAndGreed(df)
 
+    df = anadirEMAConadjclose20(df)
+    df = anadirEMAConadjclose50(df)
+    df = anadirEMAConvol20(df)
+    df = anadirEMAConvol50(df)
+
+    df = anadirSMAConadjclose20(df)
+    df = anadirSMAConadjclose50(df)
+    df = anadirSMAConvol20(df)
+    df = anadirSMAConvol50(df)
+
     return df
 
 def anadirRSIConadjclose14(dataframe):
@@ -109,6 +119,46 @@ def anadirFearAndGreed(dataframe):
     df['fearandgeed'] = computeFearAndGreed(dataframe)
     return df
 
+def anadirEMAConadjclose20(dataframe):
+    df = dataframe
+    df['emaadjclose20'] = calculate_ema(dataframe['adjclose'], 20)
+    return df
+
+def anadirEMAConadjclose50(dataframe):
+    df = dataframe
+    df['emaadjclose50'] = calculate_ema(dataframe['adjclose'], 50)
+    return df
+
+def anadirEMAConvol20(dataframe):
+    df = dataframe
+    df['emavolume20'] = calculate_ema(dataframe['volume'], 20)
+    return df
+
+def anadirEMAConvol50(dataframe):
+    df = dataframe
+    df['emavolume50'] = calculate_ema(dataframe['volume'], 50)
+    return df
+
+def anadirSMAConadjclose20(dataframe):
+    df = dataframe
+    df['smaadjclose20'] = calculate_sma(dataframe['adjclose'], 20)
+    return df
+
+def anadirSMAConadjclose50(dataframe):
+    df = dataframe
+    df['smaadjclose50'] = calculate_sma(dataframe['adjclose'], 50)
+    return df
+
+def anadirSMAConvol20(dataframe):
+    df = dataframe
+    df['smavolume20'] = calculate_sma(dataframe['volume'], 20)
+    return df
+
+def anadirSMAConvol50(dataframe):
+    df = dataframe
+    df['smavolume50'] = calculate_sma(dataframe['volume'], 50)
+    return df
+
 # Calculadora de RSI
 def computeRSI(data, time_window):
     diff = data.diff(1).dropna()  # diff in one field(one day)
@@ -166,6 +216,7 @@ def computelag(data, lag):
     # Variación en porcentaje
     return 100*(data-data.shift(lag))/data
 
+# Calculadora de Fear and Greed
 def computeFearAndGreed(data):
     # Se obtiene el listado de fear and greed index histórico (varios años) hasta hoy
     r = requests.get('https://api.alternative.me/fng/?limit=0')
@@ -181,3 +232,12 @@ def computeFearAndGreed(data):
     data2=data
     data2=data2.join(df.set_index(cols), on=cols)
     return data2['fear_greed']
+
+
+# Calculadora de EMA
+def calculate_ema(data, days, smoothing=2):
+    return  data.ewm(span=days, adjust=False).mean()
+
+# Calculadora de SMA
+def calculate_sma(data, days):
+    return data.rolling(window=days).mean()

@@ -38,6 +38,8 @@ def creaModelo(filepathModeloAGuardar):
     # Leer fichero
     datos = leerCSV(carpeta + nombreFicheroCsvAvanzado)
 
+
+
     # Se trocean los datos para train/test y validación
     datosTrainTest, datosValidacion = troceaDataframeMismoTamano(datos, 2)
 
@@ -55,7 +57,7 @@ def creaModelo(filepathModeloAGuardar):
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
     datos_a_invertir = datosValidacion[datosValidacion.index.isin(y_pred_a_invertir_valid.index)]
     rentaMedia_valid = computeRentabilidadMediaFromIncremento(datos_a_invertir)
-    print("RENTA MEDIA DE VALIDACIÓN: ", rentaMedia_valid)
+    print("RENTA MEDIANA DE VALIDACIÓN: ", rentaMedia_valid)
 
     joblib.dump(modelo, filepathModeloAGuardar)
 

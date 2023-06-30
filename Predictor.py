@@ -23,9 +23,9 @@ def predecir(pathModelo):
     PREDICCIONfeaturesporimportancia = "PREDICCIONfeaturesporimportancia.png"
     PREDICCIONNombreFicheroCSVDondeInvertir = "PREDICCIONdondeinvertir.csv"
     # Se toman 51 días hacia atrás, hasta ayer (para poder calcular RSI y demás)
-    startDate = date.today() - timedelta(days=52)
+    startDate = date.today() - timedelta(days=100)
     endDate = date.today() - timedelta(days=1)
-    cuantasEmpresas = 100
+    cuantasEmpresas = 10
     indiceComienzoListaEmpresasNasdaq = 3000
 
     print("----------------------------------------------------------")

@@ -25,6 +25,9 @@ def procesaInformacion(carpetaEntrada, nombreFicheroCsvEntrada, carpetaSalida, n
 
     datos=procesaEmpresas(datos)
 
+    # # Si se añadiera la solución en las propias features, debería salir precisión=100%, y renta muy alta
+    # datos['solucion']=datos['TARGET']
+
     # Se almacena el fichero avanzado con target
     guardarDataframeEnCsv(dataframe=datos, filepath=carpetaSalida+nombreFicheroCsvSalida)
 

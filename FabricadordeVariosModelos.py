@@ -5,6 +5,7 @@ from sklearn import metrics
 from sklearn.svm import LinearSVC
 
 from SplitterInformacion import *
+from CSV import *
 import time
 from sklearn.metrics import *
 import pandas as pd
@@ -66,7 +67,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
 
         # Se pintan las primeras x features
         cols = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
-            by="importance", ascending=False)[:5].index
+            by="importance", ascending=False)[:10].index
 
         best_features = feature_importance.loc[feature_importance.feature.isin(cols)]
 
@@ -90,7 +91,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     calculaPrecision(y_test, y_pred_test)
 
     # DEBUG:
-    umbral = 0.5
+    umbral = 0.7
     pred, proba = predictorConProba(model, X_test, umbralProba=umbral, analizarResultado=True,
                                     y_solucionParaAnalisis=y_test,
                                     mensajeDebug="Análisis en la creación el modelo mirando la probabilidad de TARGET==1 y filtrando por proba: " + str(
@@ -192,6 +193,7 @@ def predictorConProba(modelo, X, umbralProba=0.8, analizarResultado=False, y_sol
 
     if analizarResultado == True:
         print(mensajeDebug)
+        print("MODIFICAR EL UMBRAL de 0.5 LLEVA A OVERFITTING")
         auxSoloTarget = aux['TARGET']
         print('Precision score: {0:0.4f}'.format(precision_score(auxSoloTarget, aux["pred"])))
         print('Recall score: {0:0.4f}'.format(recall_score(auxSoloTarget, aux["pred"])))
