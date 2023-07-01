@@ -22,7 +22,7 @@ def creaModelo(filepathModeloAGuardar):
     featuresporimportancia = "featuresporimportancia.png"
     startDate = '01/01/2022'
     endDate = '31/12/2022'
-    cuantasEmpresas = 100
+    cuantasEmpresas = 30
     indiceComienzoListaEmpresasNasdaq = 1000
 
     print("----------------------------------------------------------")

@@ -25,7 +25,7 @@ def predecir(pathModelo):
     # Se toman 51 días hacia atrás, hasta ayer (para poder calcular RSI y demás)
     startDate = date.today() - timedelta(days=100)
     endDate = date.today() - timedelta(days=1)
-    cuantasEmpresas = 10
+    cuantasEmpresas = 100
     indiceComienzoListaEmpresasNasdaq = 3000
 
     print("----------------------------------------------------------")
