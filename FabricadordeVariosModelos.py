@@ -32,7 +32,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
     params = {'objective': 'binary',
-              'learning_rate': 0.01,
+              'learning_rate': 0.02,
               "boosting_type": "gbdt",
               "metric": metrica,
               'n_jobs': -1,

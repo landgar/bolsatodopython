@@ -10,8 +10,7 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirMACDsig(df)
     df = anadirMACDhist(df)
     df = anadirlag(df)
-    # No se añade porque hace 1 query por cada empresa, y realmente no aporta mejora a la precisión
-    # df = anadirFearAndGreed(df)
+    df = anadirFearAndGreed(df)
     df = anadirEMA(df)
     df = anadirSMA(df)
     df = anadirHammerRangos(df)
@@ -21,8 +20,8 @@ def anadirParametrosAvanzados(dataframe):
 
 def anadirRSI(dataframe):
     df = dataframe
-    periodos = [9, 14]
-    parametro = ['adjclose', 'volume']
+    periodos = [9]
+    parametro = ['adjclose']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "RSI" + parametro_i + str(periodo_i)
@@ -69,8 +68,8 @@ def anadirMACDhist(dataframe):
 
 def anadirlag(dataframe):
     df = dataframe
-    lag = [1, 2, 9, 14]
-    parametro = ['adjclose', 'volume']
+    lag = [1, 2, 3]
+    parametro = ['low', 'high', 'volume']
     for lag_i in lag:
         for parametro_i in parametro:
             nombreFeature = "lag" + parametro_i + str(lag_i)
@@ -80,13 +79,13 @@ def anadirlag(dataframe):
 
 def anadirFearAndGreed(dataframe):
     df = dataframe
-    df['fearandgeed'] = computeFearAndGreed(dataframe)
+    df['feargreed'] = computeFearAndGreed(dataframe)
     return df
 
 
 def anadirEMA(dataframe):
     df = dataframe
-    periodo = [20, 50]
+    periodo = [5, 10]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodo:
         for parametro_i in parametro:
@@ -97,7 +96,7 @@ def anadirEMA(dataframe):
 
 def anadirSMA(dataframe):
     df = dataframe
-    periodos = [20, 50]
+    periodos = [5, 10]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:

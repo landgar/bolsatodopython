@@ -38,8 +38,6 @@ def creaModelo(filepathModeloAGuardar):
     # Leer fichero
     datos = leerCSV(carpeta + nombreFicheroCsvAvanzado)
 
-
-
     # Se trocean los datos para train/test y validación
     datosTrainTest, datosValidacion = troceaDataframeMismoTamano(datos, 2)
 
