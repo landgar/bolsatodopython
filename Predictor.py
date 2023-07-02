@@ -25,7 +25,7 @@ def predecir(pathModelo):
     # Se toman 51 días hacia atrás, hasta ayer (para poder calcular RSI y demás)
     startDate = date.today() - timedelta(days=100)
     endDate = date.today() - timedelta(days=1)
-    cuantasEmpresas = 100
+    cuantasEmpresas = 30
     indiceComienzoListaEmpresasNasdaq = 3000
 
     print("----------------------------------------------------------")
@@ -63,7 +63,7 @@ def predecir(pathModelo):
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
     datosValidacion_a_invertir_valid = datosValidacion_a_invertir_valid[datosValidacion_a_invertir_valid.index.isin(y_pred_a_invertir_valid.index)]
     rentaMedia_valid = computeRentabilidadMediaFromIncremento(datosValidacion_a_invertir_valid)
-    print("RENTA MEDIA DE antigüedades cercanas a donde invertir: ", rentaMedia_valid)
+    print("Renta mediana de antigüedades cercanas (ligeramente antiguas) similares a donde invertir: ", rentaMedia_valid)
 
 
     return pathDondeInvertir

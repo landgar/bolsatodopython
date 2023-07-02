@@ -36,7 +36,7 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo=5
+    periodo=10
 
     # Se añade el incremento en porcentaje
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)

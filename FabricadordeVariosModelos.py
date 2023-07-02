@@ -32,7 +32,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
     params = {'objective': 'binary',
-              'learning_rate': 0.02,
+              'learning_rate': 0.01,
               "boosting_type": "gbdt",
               "metric": metrica,
               'n_jobs': -1,
@@ -70,9 +70,11 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
             by="importance", ascending=False)[:10].index
 
         best_features = feature_importance.loc[feature_importance.feature.isin(cols)]
-
+        features_ordenadas=best_features.sort_values(by="importance", ascending=False)
+        print("Features por importancia:")
+        print(features_ordenadas)
         plt.figure(figsize=(16, 12));
-        sns.barplot(x="importance", y="feature", data=best_features.sort_values(by="importance", ascending=False));
+        sns.barplot(x="importance", y="feature", data=features_ordenadas);
         plt.title('Importance of Feature');
         # plt.show(block=False)
         # plt.pause(5)

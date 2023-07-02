@@ -5,217 +5,76 @@ import requests
 def anadirParametrosAvanzados(dataframe):
     df = dataframe
 
-    df = anadirRSIConadjclose9(df)
-    df = anadirRSIConadjclose14(df)
-    df = anadirMACDConadjclose2(df)
-    df = anadirMACDConadjclose3(df)
-    df = anadirMACDConadjclose4(df)
-    df = anadirMACDConadjclose9(df)
-    df = anadirMACDsigConadjclose2(df)
-    df = anadirMACDsigConadjclose3(df)
-    df = anadirMACDsigConadjclose6(df)
-    df = anadirMACDsigConadjclose9(df)
-    df = anadirMACDhistConadjclose9(df)
-
-    df = anadirRSIConvol(df)
-
-    df = anadirMACDConvol(df)
-
-    df = anadirMACDsigConvol3(df)
-    df = anadirMACDsigConvol6(df)
-    df = anadirMACDsigConvol9(df)
-    # df = anadirMACDhistConvol3(df)
-    # df = anadirMACDhistConvol6(df)
-    df = anadirMACDhistConvol9(df)
-    df = anadirMACDhistConvol12(df)
-
-    df = anadiradjcloselag1(df)
-    df = anadiradjcloselag2(df)
-    df = anadiradjcloselag3(df)
-
-    df = anadirvolumelag(df)
-
+    df = anadirRSI(df)
+    df = anadirMACD(df)
+    df = anadirMACDsig(df)
+    df = anadirMACDhist(df)
+    df = anadirlag(df)
     # No se añade porque hace 1 query por cada empresa, y realmente no aporta mejora a la precisión
     # df = anadirFearAndGreed(df)
-
-    df = anadirEMAConadjclose20(df)
-    df = anadirEMAConadjclose50(df)
-    df = anadirEMAConvol20(df)
-    df = anadirEMAConvol50(df)
-
-    df = anadirSMAConadjclose20(df)
-    df = anadirSMAConadjclose50(df)
-    df = anadirSMAConvol5(df)
-    df = anadirSMAConvol10(df)
-    df = anadirSMAConvol20(df)
-    df = anadirSMAConvol50(df)
-
+    df = anadirEMA(df)
+    df = anadirSMA(df)
     df = anadirHammerRangos(df)
 
     return df
 
 
-def anadirRSIConadjclose9(dataframe):
+def anadirRSI(dataframe):
     df = dataframe
-    df['adjcloseRSI9'] = computeRSI(dataframe['adjclose'], 9)
-    return df
-
-
-def anadirRSIConadjclose14(dataframe):
-    df = dataframe
-    df['adjcloseRSI14'] = computeRSI(dataframe['adjclose'], 14)
-    return df
-
-
-def anadirMACDConadjclose2(dataframe):
-    df = dataframe
-    # FastEMA = 12 period EMA from closing price
-    # SlowEMA = 26 period EMA from closing price
-    df['adjcloseMACD2'] = computeMACD(dataframe['adjclose'], 12, 26, 2)
-    return df
-
-
-def anadirMACDConadjclose3(dataframe):
-    df = dataframe
-    # FastEMA = 12 period EMA from closing price
-    # SlowEMA = 26 period EMA from closing price
-    df['adjcloseMACD3'] = computeMACD(dataframe['adjclose'], 12, 26, 3)
-    return df
-
-
-def anadirMACDConadjclose4(dataframe):
-    df = dataframe
-    # FastEMA = 12 period EMA from closing price
-    # SlowEMA = 26 period EMA from closing price
-    df['adjcloseMACD4'] = computeMACD(dataframe['adjclose'], 12, 26, 4)
-    return df
-
-
-def anadirMACDConadjclose9(dataframe):
-    df = dataframe
-    # FastEMA = 12 period EMA from closing price
-    # SlowEMA = 26 period EMA from closing price
-    df['adjcloseMACD9'] = computeMACD(dataframe['adjclose'], 12, 26, 9)
-    return df
-
-
-def anadirMACDsigConadjclose2(dataframe):
-    df = dataframe
-    df['adjcloseMACDsig2'] = computeMACDsig(dataframe['adjclose'], 12, 26, 2)
-    return df
-
-
-def anadirMACDsigConadjclose3(dataframe):
-    df = dataframe
-    df['adjcloseMACDsig3'] = computeMACDsig(dataframe['adjclose'], 12, 26, 3)
-    return df
-
-
-def anadirMACDsigConadjclose6(dataframe):
-    df = dataframe
-    df['adjcloseMACDsig6'] = computeMACDsig(dataframe['adjclose'], 12, 26, 6)
-    return df
-
-
-def anadirMACDsigConadjclose9(dataframe):
-    df = dataframe
-    df['adjcloseMACDsig9'] = computeMACDsig(dataframe['adjclose'], 12, 26, 9)
-    return df
-
-
-def anadirMACDhistConadjclose9(dataframe):
-    df = dataframe
-    df['adjcloseMACDhist9'] = computeMACDhist(dataframe['adjclose'], 12, 26, 9)
-    return df
-
-
-def anadirRSIConvol(dataframe):
-    df = dataframe
-    periodos = [9, 14, 17]
+    periodos = [9, 14]
+    parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
-        nombreFeature = "volumeRSI" + str(periodo_i)
-        df[nombreFeature] = computeRSI(dataframe['volume'], periodo_i)
+        for parametro_i in parametro:
+            nombreFeature = "RSI" + parametro_i + str(periodo_i)
+            # FastEMA = 12 period EMA from closing price
+            # SlowEMA = 26 period EMA from closing price
+            df[nombreFeature] = computeRSI(dataframe[parametro_i], periodo_i)
     return df
 
 
-def anadirMACDConvol(dataframe):
+def anadirMACD(dataframe):
     df = dataframe
-    periodos = [2, 3, 6, 9, 12]
+    periodos = [9]
+    parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
-        nombreFeature = "volumeMACD" + str(periodo_i)
-        # FastEMA = 12 period EMA from closing price
-        # SlowEMA = 26 period EMA from closing price
-        df[nombreFeature] = computeMACD(dataframe['volume'], 12, 26, periodo_i)
-
+        for parametro_i in parametro:
+            nombreFeature = "MACD" + parametro_i + str(periodo_i)
+            # FastEMA = 12 period EMA from closing price
+            # SlowEMA = 26 period EMA from closing price
+            df[nombreFeature] = computeMACD(dataframe[parametro_i], 12, 26, periodo_i)
     return df
 
 
-def anadirMACDsigConvol3(dataframe):
+def anadirMACDsig(dataframe):
     df = dataframe
-    df['volumeMACDsig3'] = computeMACDsig(dataframe['volume'], 12, 26, 3)
+    periodos = [9, 14, 20]
+    parametro = ['adjclose', 'volume']
+    for periodo_i in periodos:
+        for parametro_i in parametro:
+            nombreFeature = "MACDsig" + parametro_i + str(periodo_i)
+            df[nombreFeature] = computeMACDsig(dataframe[parametro_i], 12, 26, periodo_i)
     return df
 
 
-def anadirMACDsigConvol6(dataframe):
+def anadirMACDhist(dataframe):
     df = dataframe
-    df['volumeMACDsig6'] = computeMACDsig(dataframe['volume'], 12, 26, 6)
+    periodos = [9, 14]
+    parametro = ['adjclose', 'volume']
+    for periodo_i in periodos:
+        for parametro_i in parametro:
+            nombreFeature = "MACDhist" + parametro_i + str(periodo_i)
+            df[nombreFeature] = computeMACDhist(dataframe[parametro_i], 12, 26, periodo_i)
     return df
 
 
-def anadirMACDsigConvol9(dataframe):
+def anadirlag(dataframe):
     df = dataframe
-    df['volumeMACDsig9'] = computeMACDsig(dataframe['volume'], 12, 26, 9)
-    return df
-
-
-def anadirMACDhistConvol3(dataframe):
-    df = dataframe
-    df['volumeMACDhist3'] = computeMACDhist(dataframe['volume'], 12, 26, 3)
-    return df
-
-
-def anadirMACDhistConvol6(dataframe):
-    df = dataframe
-    df['volumeMACDhist6'] = computeMACDhist(dataframe['volume'], 12, 26, 6)
-    return df
-
-
-def anadirMACDhistConvol9(dataframe):
-    df = dataframe
-    df['volumeMACDhist9'] = computeMACDhist(dataframe['volume'], 12, 26, 9)
-    return df
-
-
-def anadirMACDhistConvol12(dataframe):
-    df = dataframe
-    df['volumeMACDhist12'] = computeMACDhist(dataframe['volume'], 12, 26, 12)
-    return df
-
-
-def anadiradjcloselag1(dataframe):
-    df = dataframe
-    df['adjcloselag1'] = computelag(dataframe['adjclose'], 1)
-    return df
-
-
-def anadiradjcloselag2(dataframe):
-    df = dataframe
-    df['adjcloselag2'] = computelag(dataframe['adjclose'], 2)
-    return df
-
-
-def anadiradjcloselag3(dataframe):
-    df = dataframe
-    df['adjcloselag3'] = computelag(dataframe['adjclose'], 3)
-    return df
-
-
-def anadirvolumelag(dataframe):
-    df = dataframe
-    lag = [1, 2, 3, 4, 5]
+    lag = [1, 2, 9, 14]
+    parametro = ['adjclose', 'volume']
     for lag_i in lag:
-        nombreFeature = "volumelag" + str(lag_i)
-        df[nombreFeature] = computelag(dataframe['volume'], lag_i)
+        for parametro_i in parametro:
+            nombreFeature = "lag" + parametro_i + str(lag_i)
+            df[nombreFeature] = computelag(dataframe[parametro_i], lag_i)
     return df
 
 
@@ -225,74 +84,38 @@ def anadirFearAndGreed(dataframe):
     return df
 
 
-def anadirEMAConadjclose20(dataframe):
+def anadirEMA(dataframe):
     df = dataframe
-    df['emaadjclose20'] = calculate_ema(dataframe['adjclose'], 20)
+    periodo = [20, 50]
+    parametro = ['adjclose', 'volume']
+    for periodo_i in periodo:
+        for parametro_i in parametro:
+            nombreFeature = "ema" + parametro_i + str(periodo_i)
+            df[nombreFeature] = calculate_ema(dataframe[parametro_i], periodo_i)
     return df
 
 
-def anadirEMAConadjclose50(dataframe):
+def anadirSMA(dataframe):
     df = dataframe
-    df['emaadjclose50'] = calculate_ema(dataframe['adjclose'], 50)
-    return df
-
-
-def anadirEMAConvol20(dataframe):
-    df = dataframe
-    df['emavolume20'] = calculate_ema(dataframe['volume'], 20)
-    return df
-
-
-def anadirEMAConvol50(dataframe):
-    df = dataframe
-    df['emavolume50'] = calculate_ema(dataframe['volume'], 50)
-    return df
-
-
-def anadirSMAConadjclose20(dataframe):
-    df = dataframe
-    df['smaadjclose20'] = calculate_sma(dataframe['adjclose'], 20)
-    return df
-
-
-def anadirSMAConadjclose50(dataframe):
-    df = dataframe
-    df['smaadjclose50'] = calculate_sma(dataframe['adjclose'], 50)
-    return df
-
-
-def anadirSMAConvol5(dataframe):
-    df = dataframe
-    df['smavolume5'] = calculate_sma(dataframe['volume'], 5)
-    return df
-
-
-def anadirSMAConvol10(dataframe):
-    df = dataframe
-    df['smavolume10'] = calculate_sma(dataframe['volume'], 10)
-    return df
-
-
-def anadirSMAConvol20(dataframe):
-    df = dataframe
-    df['smavolume20'] = calculate_sma(dataframe['volume'], 20)
-    return df
-
-
-def anadirSMAConvol50(dataframe):
-    df = dataframe
-    df['smavolume50'] = calculate_sma(dataframe['volume'], 50)
+    periodos = [20, 50]
+    parametro = ['adjclose', 'volume']
+    for periodo_i in periodos:
+        for parametro_i in parametro:
+            nombreFeature = "sma" + parametro_i + str(periodo_i)
+            df[nombreFeature] = calculate_sma(dataframe[parametro_i], periodo_i)
     return df
 
 
 def anadirHammerRangos(dataframe):
     df = dataframe
     # Se generan varias features, iterando con varias combinaciones de parámetros hammer
+    # [1, 2, 3, 4, 10]
+    # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
     diasPreviosA = [1, 2]
     diasPreviosB = [1, 2]
     parametroA = ['high', 'low']
-    parametroB = ['low', 'high', 'open']
-    parametroC = ['open', 'high']
+    parametroB = ['high', 'low']
+    parametroC = ['high', 'low']
 
     for diasPreviosA_i in diasPreviosA:
         for diasPreviosB_i in diasPreviosB:
@@ -401,13 +224,13 @@ def calculate_sma(data, days):
 
 # CalculadoraHammer
 def calculadoraHammer(data, diasPreviosA, diasPreviosB, parametroA="open", parametroB="low", parametroC="adjclose"):
-    # Se calculará en porcentaje la fuerzo del patrón martillo, según:
-    # Hammer = 100 * caída inicial (valor positivo si cae) * subida final (valor positivo si sube)
+    # Se calculará en tanto por uno la fuerza del patrón martillo, según:
+    # Hammer = caída inicial (valor positivo si cae) * subida final (valor positivo si sube)
     # La caída inicial será: (parametroB  - parametroA), ambos los días previos indicados como parámetro
     # La subida final será: (parametroC - parametroB), donde low será el día previo indicado como parámetro, y el adjclose será de hoy
     caidaInicial = (data[parametroB].shift(diasPreviosB) - data[parametroA].shift(diasPreviosA)) / data[
         parametroA].shift(
         diasPreviosA)
     subidaFinal = (data[parametroC] - data[parametroB].shift(diasPreviosA)) / data[parametroC]
-    hammer = 100 * caidaInicial * subidaFinal
+    hammer = caidaInicial * subidaFinal
     return hammer
