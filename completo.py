@@ -33,6 +33,9 @@ from sklearn.model_selection import train_test_split
 #################################################
 #################################################
 
+# Para creación de modelo y predicción
+carpeta = "/home/t151521/Descargas/prueba/"
+
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
@@ -43,7 +46,6 @@ PREDICCIONcuantasEmpresas = 30
 PREDICCIONindiceComienzoListaEmpresasNasdaq = 3000
 
 # Para creación de modelo
-carpeta = "/home/t151521/Descargas/prueba/"
 nombreFicheroCsvBasica = "infosucio.csv"
 nombreFicheroCsvAvanzado = "infolimpioavanzadoTarget.csv"
 featuresporimportancia = "featuresporimportancia.png"
