@@ -34,14 +34,19 @@ from sklearn.model_selection import train_test_split
 #################################################
 
 # Para creación de modelo
+startDate = '01/01/2022'
+endDate = '31/12/2022'
+cuantasEmpresas = 30
+indiceComienzoListaEmpresasNasdaq = 1000
+# Para predicción
+PREDICCIONcuantasEmpresas = 30
+PREDICCIONindiceComienzoListaEmpresasNasdaq = 3000
+
+# Para creación de modelo
 carpeta = "/home/t151521/Descargas/prueba/"
 nombreFicheroCsvBasica = "infosucio.csv"
 nombreFicheroCsvAvanzado = "infolimpioavanzadoTarget.csv"
 featuresporimportancia = "featuresporimportancia.png"
-startDate = '01/01/2022'
-endDate = '31/12/2022'
-cuantasEmpresas = 10
-indiceComienzoListaEmpresasNasdaq = 1000
 pathModelo = carpeta + "MODELO.scikit"
 
 # Para predicción
@@ -51,8 +56,7 @@ PREDICCIONNombreFicheroCSVDondeInvertir = "PREDICCIONdondeinvertir.csv"
 # Se toman 51 días hacia atrás, hasta ayer (para poder calcular RSI y demás)
 PREDICCIONstartDate = date.today() - timedelta(days=100)
 PREDICCIONendDate = date.today() - timedelta(days=1)
-PREDICCIONcuantasEmpresas = 10
-PREDICCIONindiceComienzoListaEmpresasNasdaq = 3000
+
 
 #################################################
 #################################################
@@ -1154,7 +1158,9 @@ def getEmpresasFromNasdaq(empresasMaximas, startDate, endDate, offsetEmpresasNas
                 # Dataframe vacío
                 datoscompletos = pd.DataFrame(datosEmpresa)
             else:
-                datoscompletos = datoscompletos.append(datosEmpresa, ignore_index=True)
+                datoscompletos.reset_index(drop=True, inplace=True)
+                datosEmpresa.reset_index(drop=True, inplace=True)
+                datoscompletos = pd.concat([datoscompletos, datosEmpresa], axis=0)
 
         except AssertionError as error:
             print("No se ha podido obtener información de la empresa \"" + nasdaq_ticker_list[
@@ -1294,7 +1300,10 @@ def procesaEmpresas(datos):
             primero = False
             datoscompletos = pd.DataFrame(datosEmpresa)
         else:
-            datoscompletos = datoscompletos.append(datosEmpresa, ignore_index=True)
+
+            datoscompletos.reset_index(drop=True, inplace=True)
+            datosEmpresa.reset_index(drop=True, inplace=True)
+            datoscompletos = pd.concat([datoscompletos, datosEmpresa], axis=0)
 
     return datoscompletos
 
