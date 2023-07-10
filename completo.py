@@ -39,11 +39,11 @@ carpeta = "/home/t151521/Descargas/prueba/"
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 30
-indiceComienzoListaEmpresasNasdaq = 1000
+cuantasEmpresas = 10
+indiceComienzoListaEmpresas = 1000
 # Para predicción
-PREDICCIONcuantasEmpresas = 30
-PREDICCIONindiceComienzoListaEmpresasNasdaq = 3000
+PREDICCIONcuantasEmpresas = 10
+PREDICCIONindiceComienzoListaEmpresas = 3000
 
 # Para creación de modelo
 nombreFicheroCsvBasica = "infosucio.csv"
@@ -1116,14 +1116,22 @@ def get_company_officers(ticker):
 
 
 # empresasMaximas: NÚMERO MÁXIMO DE EMPRESAS A LEER. Si quiero todos, poner un número gigante: 999999
-def getEmpresasFromNasdaq(empresasMaximas, startDate, endDate, offsetEmpresasNasdaq):
+def getEmpresas(empresasMaximas, startDate, endDate, offsetEmpresas, mercado):
     empresasMaximasAux = empresasMaximas
 
-    # Listado completo de empresas del NASDAQ
-    nasdaq_ticker_list = tickers_nasdaq()
+    ticker_list=[]
+    if (mercado=="NASDAQ"):
+        # Listado completo de empresas del NASDAQ
+        ticker_list = tickers_nasdaq()
+    elif (mercado=="SP500"):
+        ticker_list = tickers_sp500()
+    elif (mercado=="OTHER"):
+        ticker_list = tickers_other()
+    else:
+        raise Exception("MERCADO NO ACEPTADO... NO SE PUEDEN OBTENER EMPRESAS")
 
     # Se eliminan las N primeras, para poder escoger unas empresas u otras
-    nasdaq_ticker_list = nasdaq_ticker_list[offsetEmpresasNasdaq:]
+    ticker_list = ticker_list[offsetEmpresas:]
 
     # OTRA INFORMACIÓN
     # """ pull historical data for Netflix (NFLX) """
@@ -1138,9 +1146,9 @@ def getEmpresasFromNasdaq(empresasMaximas, startDate, endDate, offsetEmpresasNas
     # # INFORMACIÓN ESTÁTICA
     # info = get_quote_table("amzn")
 
-    # Se obtienen todos los datos del NASDAQ
+    # Se obtienen todos los datos de las empresas
     primero = True
-    for i in range(len(nasdaq_ticker_list)):
+    for i in range(len(ticker_list)):
         empresasMaximasAux = empresasMaximasAux - 1
         if empresasMaximasAux < 0:
             break
@@ -1149,10 +1157,10 @@ def getEmpresasFromNasdaq(empresasMaximas, startDate, endDate, offsetEmpresasNas
         sleep(randint(1, 4))
 
         # DEBUG
-        print("Empresa " + str(i + 1) + " - Se obtienen los datos de la empresa: ", nasdaq_ticker_list[i])
+        print("Empresa " + str(i + 1) + " - Se obtienen los datos de la empresa: ", ticker_list[i])
 
         try:
-            datosEmpresa = get_data(nasdaq_ticker_list[i], start_date=startDate,
+            datosEmpresa = get_data(ticker_list[i], start_date=startDate,
                                     end_date=endDate, index_as_date=False)
             if primero:
                 primero = False
@@ -1164,15 +1172,16 @@ def getEmpresasFromNasdaq(empresasMaximas, startDate, endDate, offsetEmpresasNas
                 datoscompletos = pd.concat([datoscompletos, datosEmpresa], axis=0)
 
         except AssertionError as error:
-            print("No se ha podido obtener información de la empresa \"" + nasdaq_ticker_list[
+            print("No se ha podido obtener información de la empresa \"" + ticker_list[
                 i] + "\" pero se continúa...")
 
     return datoscompletos
 
 
 # Guardar CSV con la información de las empresas
-def descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsv, offsetEmpresasNasdaq):
-    datos = getEmpresasFromNasdaq(cuantasEmpresas, startDate, endDate, offsetEmpresasNasdaq)
+def descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsv, offsetEmpresas):
+    mercado="OTHER"
+    datos = getEmpresas(cuantasEmpresas, startDate, endDate, offsetEmpresas, mercado)
     guardarDataframeEnCsv(dataframe=datos, filepath=carpeta + nombreFicheroCsv)
 
 
@@ -1283,7 +1292,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=3, periodo=periodo)
 
     return datos
 
@@ -1913,7 +1922,7 @@ def creaModelo(filepathModeloAGuardar):
 
     # Descarga de la información
     descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsvBasica,
-                      indiceComienzoListaEmpresasNasdaq)
+                      indiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, nombreFicheroCsvBasica, carpeta, nombreFicheroCsvAvanzado)
@@ -1956,7 +1965,7 @@ def predecir(pathModelo, umbralProba=0.5):
     # Descarga de la información
     descargaDatosACsv(PREDICCIONcuantasEmpresas, PREDICCIONstartDate, PREDICCIONendDate, carpeta,
                       PREDICCIONnombreFicheroCsvBasica,
-                      offsetEmpresasNasdaq=PREDICCIONindiceComienzoListaEmpresasNasdaq)
+                      offsetEmpresas=PREDICCIONindiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, PREDICCIONnombreFicheroCsvBasica, carpeta, PREDICCIONnombreFicheroCsvAvanzado)
