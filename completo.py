@@ -59,7 +59,6 @@ PREDICCIONNombreFicheroCSVDondeInvertir = "PREDICCIONdondeinvertir.csv"
 PREDICCIONstartDate = date.today() - timedelta(days=100)
 PREDICCIONendDate = date.today() - timedelta(days=1)
 
-
 #################################################
 #################################################
 # DEFINICIÓN DE FUNCIONES
@@ -1338,14 +1337,19 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirEMA(df)
     df = anadirSMA(df)
     df = anadirHammerRangos(df)
+    df = anadirvwap(df)
+    df = anadirDistanciaAbollinger(df)
+    df = anadirATR(df)
+    # df = anadirCCI(df)
+    df = anadircombinacionsimple(df)
 
     return df
 
 
 def anadirRSI(dataframe):
     df = dataframe
-    periodos = [9]
-    parametro = ['adjclose']
+    periodos = [14, 17]
+    parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "RSI" + parametro_i + str(periodo_i)
@@ -1357,7 +1361,7 @@ def anadirRSI(dataframe):
 
 def anadirMACD(dataframe):
     df = dataframe
-    periodos = [9]
+    periodos = [5, 9, 13]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1370,7 +1374,7 @@ def anadirMACD(dataframe):
 
 def anadirMACDsig(dataframe):
     df = dataframe
-    periodos = [9, 14, 20]
+    periodos = [14, 20, 30]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1392,7 +1396,7 @@ def anadirMACDhist(dataframe):
 
 def anadirlag(dataframe):
     df = dataframe
-    lag = [1, 2, 3]
+    lag = [1, 2, 3, 10]
     parametro = ['low', 'high', 'volume']
     for lag_i in lag:
         for parametro_i in parametro:
@@ -1409,7 +1413,7 @@ def anadirFearAndGreed(dataframe):
 
 def anadirEMA(dataframe):
     df = dataframe
-    periodo = [5, 10]
+    periodo = [5, 10, 15, 20]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodo:
         for parametro_i in parametro:
@@ -1420,7 +1424,7 @@ def anadirEMA(dataframe):
 
 def anadirSMA(dataframe):
     df = dataframe
-    periodos = [5, 10]
+    periodos = [5, 10, 15, 20]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1434,7 +1438,7 @@ def anadirHammerRangos(dataframe):
     # Se generan varias features, iterando con varias combinaciones de parámetros hammer
     # [1, 2, 3, 4, 10]
     # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2]
+    diasPreviosA = [1, 2, 3]
     diasPreviosB = [1, 2]
     parametroA = ['high', 'low']
     parametroB = ['high', 'low']
@@ -1451,6 +1455,77 @@ def anadirHammerRangos(dataframe):
                                                               diasPreviosB=diasPreviosB_i, parametroA=parametroA_i,
                                                               parametroB=parametroB_i, parametroC=parametroC_i)
 
+    return df
+
+
+def anadirvwap(dataframe):
+    df = dataframe
+    parametroA = ['adjclose']
+    parametroB = ['volume']
+    for parametroA_i in parametroA:
+        for parametroB_i in parametroB:
+            nombreFeature = "vwap" + parametroA_i + parametroB_i
+            df[nombreFeature] = computevwap(df, parametroA_i, parametroB_i)
+    return df
+
+
+def anadirDistanciaAbollinger(dataframe):
+    df = dataframe
+    parametroA = [5, 6, 8]  # datapoint rolling window
+    parametroB = [6, 7, 8, 9]  # sigma width
+    parametroC = ['open', ]
+    for parametroA_i in parametroA:
+        for parametroB_i in parametroB:
+            for parametroC_i in parametroC:
+                nombreFeatureMA = "bollingerMA" + str(parametroA_i) + "-" + str(parametroB_i) + parametroC_i
+                nombreFeatureBU = "bollingerBU" + str(parametroA_i) + "-" + str(parametroB_i) + parametroC_i
+                nombreFeatureBL = "bollingerBL" + str(parametroA_i) + "-" + str(parametroB_i) + parametroC_i
+                MA, BU, BL = computebollinger_bands(dataframe, parametroA_i, parametroB_i)
+                df[nombreFeatureMA] = distanciaTantoPorUno(df[parametroC_i], MA)
+                df[nombreFeatureBU] = distanciaTantoPorUno(df[parametroC_i], BU)
+                df[nombreFeatureBL] = distanciaTantoPorUno(df[parametroC_i], BL)
+    return df
+
+
+def anadirATR(dataframe):
+    df = dataframe
+    periodos = [5, 10, 15, 20]
+    for periodo_i in periodos:
+        nombreFeature = "atr" + str(periodo_i)
+        df[nombreFeature] = computeATR(dataframe, periodo_i)
+    return df
+
+
+def anadirCCI(dataframe):
+    df = dataframe
+    periodos = [5, 10, 15, 20]
+    for periodo_i in periodos:
+        nombreFeature = "cci" + str(periodo_i)
+        df[nombreFeature] = computeCCI(dataframe, periodo_i)
+    return df
+
+
+# Calcula las diferencias en porcentaje entre unos parámetros y otros, entre hoy y/o días anteriores
+def anadircombinacionsimple(dataframe):
+    df = dataframe
+    parametroA = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
+    parametroB = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
+    periodo = [1, 2, 3]
+    for periodo_i in periodo:
+        for parametroA_i in parametroA:
+            for parametroB_i in parametroB:
+                nombreFeature = "simple-" + parametroA_i + "-" + parametroB_i + "-" + str(periodo_i)
+                Bdesplazado = computelag(df[parametroB_i], periodo_i)
+                df[nombreFeature] = (df[parametroA_i] - Bdesplazado) / df[parametroA_i]
+    return df
+
+
+def anadiraaron(dataframe):
+    df = dataframe
+    periodo = [5, 10, 15]
+    for periodo_i in periodo:
+        nombreFeature = "aaron-" + str(periodo_i)
+        df[nombreFeature] = computeaaron(df, periodo_i)
     return df
 
 
@@ -1559,6 +1634,90 @@ def calculadoraHammer(data, diasPreviosA, diasPreviosB, parametroA="open", param
     return hammer
 
 
+def computevwap(data, parametroA="adjclose", parametroB="volume"):
+    df = data
+    # https://altcoinoracle.com/calculate-the-volume-weighted-average-price-vwap-in-python/
+    # Calculate the cumulative total of price times volume
+    ab = df[parametroA] * df[parametroB]
+    cumab = ab.cumsum()
+
+    # Calculate the cumulative total of volume
+    cumb = df[parametroB].cumsum()
+
+    # Calculate VWAP
+    return cumab / cumb
+
+
+def computebollinger_bands(dataframe, n, m):
+    df = dataframe
+    # https://tcoil.info/compute-bollinger-bands-for-stocks-with-python-and-pandas/
+    # takes dataframe on input
+    # n = smoothing length
+    # m = number of standard deviations away from MA
+
+    # typical price
+    TP = (df['high'] + df['low'] + df['adjclose']) / 3
+    # but we will use Adj close instead for now, depends
+
+    data = TP
+    # data = df['Adj Close']
+
+    # takes one column from dataframe
+    B_MA = pd.Series((data.rolling(n, min_periods=n).mean()), name='B_MA')
+    sigma = data.rolling(n, min_periods=n).std()
+
+    BU = pd.Series((B_MA + m * sigma), name='BU')
+    BL = pd.Series((B_MA - m * sigma), name='BL')
+
+    return B_MA, BU, BL
+
+
+def wwma(values, n):
+    """
+     J. Welles Wilder's EMA
+    """
+    return values.ewm(alpha=1 / n, adjust=False).mean()
+
+
+def computeATR(dataframe, n):
+    df = dataframe
+    data = df.copy()
+    high = data['high']
+    low = data['low']
+    close = data['close']
+    data['tr0'] = abs(high - low)
+    data['tr1'] = abs(high - close.shift())
+    data['tr2'] = abs(low - close.shift())
+    tr = data[['tr0', 'tr1', 'tr2']].max(axis=1)
+    atr = wwma(tr, n)
+    return atr
+
+
+# Commodity Channel Index
+def computeCCI(dataframe, ndays):
+    df = dataframe
+    tp = (df['high'] + df['low'] + df['close']) / 3
+    sma = df['TP'].rolling(ndays).mean()
+    mad = df['TP'].rolling(ndays).apply(lambda x: pd.Series(x).mad())
+    return (tp - sma) / (0.015 * mad)
+
+
+# Aaron oscilator
+def computeaaron(dataframe, n):
+    df = dataframe
+    aroon_up = 100 * np.sliding_window_view(df['High'], n + 1).argmax(1) / n
+    aroon_down = 100 * np.sliding_window_view(df['Low'], n + 1).argmin(1) / n
+
+    # The original dimensions are trimmedas required by the size of the sliding window
+    aaronup = np.hstack([[np.nan] * n, aroon_up])
+    aarondown = np.hstack([[np.nan] * n, aroon_down])
+    return aaronup, aarondown
+
+
+def distanciaTantoPorUno(A, B):
+    return (B - A) / A
+
+
 def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibujoFeatures=""):
     # Aleatorización de datos
     df = aleatorizarDatos(datos)
@@ -1575,7 +1734,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
     params = {'objective': 'binary',
-              'learning_rate': 0.02,
+              'learning_rate': 0.01,
               "boosting_type": "gbdt",
               "metric": metrica,
               'n_jobs': -1,
@@ -1786,7 +1945,7 @@ def creaModelo(filepathModeloAGuardar):
     return modelo
 
 
-def predecir(pathModelo):
+def predecir(pathModelo, umbralProba=0.5):
     print("----------------------------------------------------------")
     print("--- COMIENZO DE PREDICCIÓN PARA INVERTIR DINERO REAL-----")
     print("----------------------------------------------------------")
@@ -1807,7 +1966,7 @@ def predecir(pathModelo):
 
     # Se valida el modelo con datos independientes
     X_valid, y_valid = limpiaDatosParaUsarModelo(datos)
-    y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=0.5, analizarResultado=False)
+    y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=umbralProba, analizarResultado=False)
 
     # Análisis de sólo las filas donde invertir
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
@@ -1824,6 +1983,7 @@ def predecir(pathModelo):
         datosValidacion_a_invertir_valid.index.isin(y_pred_a_invertir_valid.index)]
     rentaMedia_valid = computeRentabilidadMediaFromIncremento(datosValidacion_a_invertir_valid)
     print("...")
+    print("umbral de probabilidad para escoger el target", umbralProba)
     print("RENTA MEDIANA de antigüedades cercanas (ligeramente antiguas) similares a donde invertir: ",
           rentaMedia_valid)
 
@@ -1844,7 +2004,7 @@ modelo = creaModelo(pathModelo)
 #################################################
 #################################################
 # Se predice:
-predecir(pathModelo)
+predecir(pathModelo, umbralProba=0.5)
 ######################################################################
 
 print("...")
