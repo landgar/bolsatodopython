@@ -39,10 +39,10 @@ carpeta = "/home/t151521/Descargas/prueba/"
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 10
-indiceComienzoListaEmpresas = 1000
+cuantasEmpresas = 40
+indiceComienzoListaEmpresas = 2000
 # Para predicción
-PREDICCIONcuantasEmpresas = 10
+PREDICCIONcuantasEmpresas = 40
 PREDICCIONindiceComienzoListaEmpresas = 3000
 
 # Para creación de modelo
@@ -1119,13 +1119,13 @@ def get_company_officers(ticker):
 def getEmpresas(empresasMaximas, startDate, endDate, offsetEmpresas, mercado):
     empresasMaximasAux = empresasMaximas
 
-    ticker_list=[]
-    if (mercado=="NASDAQ"):
+    ticker_list = []
+    if (mercado == "NASDAQ"):
         # Listado completo de empresas del NASDAQ
         ticker_list = tickers_nasdaq()
-    elif (mercado=="SP500"):
+    elif (mercado == "SP500"):
         ticker_list = tickers_sp500()
-    elif (mercado=="OTHER"):
+    elif (mercado == "OTHER"):
         ticker_list = tickers_other()
     else:
         raise Exception("MERCADO NO ACEPTADO... NO SE PUEDEN OBTENER EMPRESAS")
@@ -1180,7 +1180,7 @@ def getEmpresas(empresasMaximas, startDate, endDate, offsetEmpresas, mercado):
 
 # Guardar CSV con la información de las empresas
 def descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsv, offsetEmpresas):
-    mercado="OTHER"
+    mercado = "OTHER"
     datos = getEmpresas(cuantasEmpresas, startDate, endDate, offsetEmpresas, mercado)
     guardarDataframeEnCsv(dataframe=datos, filepath=carpeta + nombreFicheroCsv)
 
@@ -1286,13 +1286,13 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 10
+    periodo = 5
 
     # Se añade el incremento en porcentaje
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=3, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
 
     return datos
 
@@ -1337,80 +1337,85 @@ def aleatorizarDatos(datos):
 def anadirParametrosAvanzados(dataframe):
     df = dataframe
 
-    df = anadirRSI(df)
-    df = anadirMACD(df)
-    df = anadirMACDsig(df)
-    df = anadirMACDhist(df)
-    df = anadirlag(df)
+    df = anadirRSIRelativa(df)
+    df = anadirMACDRelativa(df)
+    df = anadirMACDsigRelativa(df)
+    df = anadirMACDhistRelativa(df)
+    df = anadirlagRelativa(df)
     df = anadirFearAndGreed(df)
-    df = anadirEMA(df)
-    df = anadirSMA(df)
-    df = anadirHammerRangos(df)
-    df = anadirvwap(df)
-    df = anadirDistanciaAbollinger(df)
+    df = anadirEMARelativa(df)
+    df = anadirSMARelativa(df)
+    df = anadirHammerRangosRelativa(df)
+    df = anadirvwapRelativa(df)
+    df = anadirDistanciaAbollingerRelativa(df)
     df = anadirATR(df)
     # df = anadirCCI(df)
-    df = anadircombinacionsimple(df)
+    df = anadircombinacionsimpleRelativa(df)
 
     return df
 
 
-def anadirRSI(dataframe):
+def anadirRSIRelativa(dataframe):
     df = dataframe
-    periodos = [14, 17]
+    periodos = [3, 5, 7, 10, 15] # SIEMPRE MAYOR O IGUAL QUE 3
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "RSI" + parametro_i + str(periodo_i)
             # FastEMA = 12 period EMA from closing price
             # SlowEMA = 26 period EMA from closing price
-            df[nombreFeature] = computeRSI(dataframe[parametro_i], periodo_i)
+            df[nombreFeature] = (computeRSI(dataframe[parametro_i], periodo_i) - dataframe[parametro_i]) / dataframe[
+                parametro_i]
     return df
 
 
-def anadirMACD(dataframe):
+def anadirMACDRelativa(dataframe):
     df = dataframe
-    periodos = [5, 9, 13]
+    periodos = [5, 10, 15]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "MACD" + parametro_i + str(periodo_i)
             # FastEMA = 12 period EMA from closing price
             # SlowEMA = 26 period EMA from closing price
-            df[nombreFeature] = computeMACD(dataframe[parametro_i], 12, 26, periodo_i)
+            df[nombreFeature] = (computeMACD(dataframe[parametro_i], 12, 26, periodo_i) - dataframe[parametro_i]) / \
+                                dataframe[parametro_i]
     return df
 
 
-def anadirMACDsig(dataframe):
+def anadirMACDsigRelativa(dataframe):
     df = dataframe
-    periodos = [14, 20, 30]
+    periodos = [10, 15, 20]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "MACDsig" + parametro_i + str(periodo_i)
-            df[nombreFeature] = computeMACDsig(dataframe[parametro_i], 12, 26, periodo_i)
+            df[nombreFeature] = (computeMACDsig(dataframe[parametro_i], 12, 26, periodo_i) - dataframe[parametro_i]) / \
+                                dataframe[parametro_i]
     return df
 
 
-def anadirMACDhist(dataframe):
+def anadirMACDhistRelativa(dataframe):
     df = dataframe
-    periodos = [9, 14]
+    periodos = [5, 10, 15]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "MACDhist" + parametro_i + str(periodo_i)
-            df[nombreFeature] = computeMACDhist(dataframe[parametro_i], 12, 26, periodo_i)
+            df[nombreFeature] = (computeMACDhist(dataframe[parametro_i], 12, 26, periodo_i) - dataframe[parametro_i]) / \
+                                dataframe[parametro_i]
     return df
 
 
-def anadirlag(dataframe):
+def anadirlagRelativa(dataframe):
     df = dataframe
-    lag = [1, 2, 3, 10]
+    lag = [1, 2, 5, 10, 15]
     parametro = ['low', 'high', 'volume']
     for lag_i in lag:
         for parametro_i in parametro:
             nombreFeature = "lag" + parametro_i + str(lag_i)
-            df[nombreFeature] = computelag(dataframe[parametro_i], lag_i)
+            df[nombreFeature] = (computelag(dataframe[parametro_i], lag_i) - dataframe[parametro_i]) / dataframe[
+                parametro_i]
     return df
 
 
@@ -1420,35 +1425,37 @@ def anadirFearAndGreed(dataframe):
     return df
 
 
-def anadirEMA(dataframe):
+def anadirEMARelativa(dataframe):
     df = dataframe
-    periodo = [5, 10, 15, 20]
+    periodo = [5, 10, 15]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodo:
         for parametro_i in parametro:
             nombreFeature = "ema" + parametro_i + str(periodo_i)
-            df[nombreFeature] = calculate_ema(dataframe[parametro_i], periodo_i)
+            df[nombreFeature] = (calculate_ema(dataframe[parametro_i], periodo_i) - dataframe[parametro_i]) / dataframe[
+                parametro_i]
     return df
 
 
-def anadirSMA(dataframe):
+def anadirSMARelativa(dataframe):
     df = dataframe
-    periodos = [5, 10, 15, 20]
+    periodos = [3, 5, 10, 15, 20]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "sma" + parametro_i + str(periodo_i)
-            df[nombreFeature] = calculate_sma(dataframe[parametro_i], periodo_i)
+            df[nombreFeature] = (calculate_sma(dataframe[parametro_i], periodo_i) - dataframe[parametro_i]) / dataframe[
+                parametro_i]
     return df
 
 
-def anadirHammerRangos(dataframe):
+def anadirHammerRangosRelativa(dataframe):
     df = dataframe
     # Se generan varias features, iterando con varias combinaciones de parámetros hammer
     # [1, 2, 3, 4, 10]
     # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2, 3]
-    diasPreviosB = [1, 2]
+    diasPreviosA = [1, 2, 3, 5, 9]
+    diasPreviosB = [1, 2, 3, 5, 9]
     parametroA = ['high', 'low']
     parametroB = ['high', 'low']
     parametroC = ['high', 'low']
@@ -1460,29 +1467,30 @@ def anadirHammerRangos(dataframe):
                     for parametroC_i in parametroC:
                         nombreFeature = "hammer" + str(diasPreviosA_i) + "y" + str(
                             diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
-                        df[nombreFeature] = calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
-                                                              diasPreviosB=diasPreviosB_i, parametroA=parametroA_i,
-                                                              parametroB=parametroB_i, parametroC=parametroC_i)
+                        df[nombreFeature] = (calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
+                                                               diasPreviosB=diasPreviosB_i, parametroA=parametroA_i,
+                                                               parametroB=parametroB_i, parametroC=parametroC_i) -
+                                             dataframe[parametroC_i]) / dataframe[parametroC_i]
 
     return df
 
 
-def anadirvwap(dataframe):
+def anadirvwapRelativa(dataframe):
     df = dataframe
     parametroA = ['adjclose']
     parametroB = ['volume']
     for parametroA_i in parametroA:
         for parametroB_i in parametroB:
             nombreFeature = "vwap" + parametroA_i + parametroB_i
-            df[nombreFeature] = computevwap(df, parametroA_i, parametroB_i)
+            df[nombreFeature] = computevwapRelativa(df, parametroA_i, parametroB_i)
     return df
 
 
-def anadirDistanciaAbollinger(dataframe):
+def anadirDistanciaAbollingerRelativa(dataframe):
     df = dataframe
-    parametroA = [5, 6, 8]  # datapoint rolling window
-    parametroB = [6, 7, 8, 9]  # sigma width
-    parametroC = ['open', ]
+    parametroA = [2, 3, 4, 5]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroB = [2, 3, 4, 5]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroC = ['adjclose', 'volume']
     for parametroA_i in parametroA:
         for parametroB_i in parametroB:
             for parametroC_i in parametroC:
@@ -1490,15 +1498,15 @@ def anadirDistanciaAbollinger(dataframe):
                 nombreFeatureBU = "bollingerBU" + str(parametroA_i) + "-" + str(parametroB_i) + parametroC_i
                 nombreFeatureBL = "bollingerBL" + str(parametroA_i) + "-" + str(parametroB_i) + parametroC_i
                 MA, BU, BL = computebollinger_bands(dataframe, parametroA_i, parametroB_i)
-                df[nombreFeatureMA] = distanciaTantoPorUno(df[parametroC_i], MA)
-                df[nombreFeatureBU] = distanciaTantoPorUno(df[parametroC_i], BU)
-                df[nombreFeatureBL] = distanciaTantoPorUno(df[parametroC_i], BL)
+                df[nombreFeatureMA] = (distanciaTantoPorUno(df[parametroC_i], MA) - df[parametroC_i]) / df[parametroC_i]
+                df[nombreFeatureBU] = (distanciaTantoPorUno(df[parametroC_i], BU) - df[parametroC_i]) / df[parametroC_i]
+                df[nombreFeatureBL] = (distanciaTantoPorUno(df[parametroC_i], BL) - df[parametroC_i]) / df[parametroC_i]
     return df
 
 
 def anadirATR(dataframe):
     df = dataframe
-    periodos = [5, 10, 15, 20]
+    periodos = [3, 5, 8]
     for periodo_i in periodos:
         nombreFeature = "atr" + str(periodo_i)
         df[nombreFeature] = computeATR(dataframe, periodo_i)
@@ -1507,7 +1515,7 @@ def anadirATR(dataframe):
 
 def anadirCCI(dataframe):
     df = dataframe
-    periodos = [5, 10, 15, 20]
+    periodos = [3, 5, 8]
     for periodo_i in periodos:
         nombreFeature = "cci" + str(periodo_i)
         df[nombreFeature] = computeCCI(dataframe, periodo_i)
@@ -1515,11 +1523,11 @@ def anadirCCI(dataframe):
 
 
 # Calcula las diferencias en porcentaje entre unos parámetros y otros, entre hoy y/o días anteriores
-def anadircombinacionsimple(dataframe):
+def anadircombinacionsimpleRelativa(dataframe):
     df = dataframe
     parametroA = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
     parametroB = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
-    periodo = [1, 2, 3]
+    periodo = [1, 2, 3, 4, 5]
     for periodo_i in periodo:
         for parametroA_i in parametroA:
             for parametroB_i in parametroB:
@@ -1531,7 +1539,7 @@ def anadircombinacionsimple(dataframe):
 
 def anadiraaron(dataframe):
     df = dataframe
-    periodo = [5, 10, 15]
+    periodo = [1, 3, 5]
     for periodo_i in periodo:
         nombreFeature = "aaron-" + str(periodo_i)
         df[nombreFeature] = computeaaron(df, periodo_i)
@@ -1643,7 +1651,7 @@ def calculadoraHammer(data, diasPreviosA, diasPreviosB, parametroA="open", param
     return hammer
 
 
-def computevwap(data, parametroA="adjclose", parametroB="volume"):
+def computevwapRelativa(data, parametroA="adjclose", parametroB="volume"):
     df = data
     # https://altcoinoracle.com/calculate-the-volume-weighted-average-price-vwap-in-python/
     # Calculate the cumulative total of price times volume
@@ -1653,8 +1661,8 @@ def computevwap(data, parametroA="adjclose", parametroB="volume"):
     # Calculate the cumulative total of volume
     cumb = df[parametroB].cumsum()
 
-    # Calculate VWAP
-    return cumab / cumb
+    # Calculate VWAP relativa
+    return (cumab - cumb) / cumb
 
 
 def computebollinger_bands(dataframe, n, m):
@@ -1803,12 +1811,12 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     # DEBUG:
     calculaPrecision(y_test, y_pred_test)
 
-    # DEBUG:
-    umbral = 0.7
-    pred, proba = predictorConProba(model, X_test, umbralProba=umbral, analizarResultado=True,
-                                    y_solucionParaAnalisis=y_test,
-                                    mensajeDebug="Análisis en la creación el modelo mirando la probabilidad de TARGET==1 y filtrando por proba: " + str(
-                                        umbral))
+    # # DEBUG:
+    # umbral = 0.6
+    # pred, proba = predictorConProba(model, X_test, umbralProba=umbral, analizarResultado=True,
+    #                                 y_solucionParaAnalisis=y_test,
+    #                                 mensajeDebug="Análisis en la creación el modelo mirando la probabilidad de TARGET==1 y filtrando por proba: " + str(
+    #                                     umbral))
 
     return model
 
@@ -1859,7 +1867,8 @@ def clean_dataset(df):
 def divideDatosParaTrainTestXY(datos):
     # Se separan features de TARGET, y se quitan columnas no numéricas
     X, y = limpiaDatosParaUsarModelo(datos)
-    X_A, X_B, y_A, y_B = train_test_split(X, y, stratify=y, test_size=0.3, random_state=5)
+    print("tamano: ", str(X.size) +" x "+str(y.size))
+    X_A, X_B, y_A, y_B = train_test_split(X, y, stratify=y, test_size=0.5, random_state=0)
     return X_A, X_B, y_A, y_B
 
 
