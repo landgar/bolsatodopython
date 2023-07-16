@@ -26,6 +26,8 @@ from imblearn.combine import *
 from sklearn import metrics
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
+import math
+import warnings
 
 #################################################
 #################################################
@@ -39,10 +41,11 @@ carpeta = "/home/t151521/Descargas/prueba/"
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 40
-indiceComienzoListaEmpresas = 2000
+cuantasEmpresas = 30
+indiceComienzoListaEmpresas = 1000
+descargarInternetParaGenerarModelo= False
 # Para predicción
-PREDICCIONcuantasEmpresas = 40
+PREDICCIONcuantasEmpresas = 50
 PREDICCIONindiceComienzoListaEmpresas = 3000
 
 # Para creación de modelo
@@ -56,7 +59,7 @@ PREDICCIONnombreFicheroCsvBasica = "PREDICCIONinfosucio.csv"
 PREDICCIONnombreFicheroCsvAvanzado = "PREDICCIONinfolimpioavanzadoTarget.csv"
 PREDICCIONNombreFicheroCSVDondeInvertir = "PREDICCIONdondeinvertir.csv"
 # Se toman 51 días hacia atrás, hasta ayer (para poder calcular RSI y demás)
-PREDICCIONstartDate = date.today() - timedelta(days=100)
+PREDICCIONstartDate = date.today() - timedelta(days=200)
 PREDICCIONendDate = date.today() - timedelta(days=1)
 
 #################################################
@@ -1292,7 +1295,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=2, periodo=periodo)
 
     return datos
 
@@ -1357,7 +1360,7 @@ def anadirParametrosAvanzados(dataframe):
 
 def anadirRSIRelativa(dataframe):
     df = dataframe
-    periodos = [3, 5, 7, 10, 15] # SIEMPRE MAYOR O IGUAL QUE 3
+    periodos = [15, 25, 50]  # SIEMPRE MAYOR O IGUAL QUE 3
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1371,7 +1374,7 @@ def anadirRSIRelativa(dataframe):
 
 def anadirMACDRelativa(dataframe):
     df = dataframe
-    periodos = [5, 10, 15]
+    periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1385,7 +1388,7 @@ def anadirMACDRelativa(dataframe):
 
 def anadirMACDsigRelativa(dataframe):
     df = dataframe
-    periodos = [10, 15, 20]
+    periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1397,7 +1400,7 @@ def anadirMACDsigRelativa(dataframe):
 
 def anadirMACDhistRelativa(dataframe):
     df = dataframe
-    periodos = [5, 10, 15]
+    periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1409,7 +1412,7 @@ def anadirMACDhistRelativa(dataframe):
 
 def anadirlagRelativa(dataframe):
     df = dataframe
-    lag = [1, 2, 5, 10, 15]
+    lag = [1, 2, 5]
     parametro = ['low', 'high', 'volume']
     for lag_i in lag:
         for parametro_i in parametro:
@@ -1427,7 +1430,7 @@ def anadirFearAndGreed(dataframe):
 
 def anadirEMARelativa(dataframe):
     df = dataframe
-    periodo = [5, 10, 15]
+    periodo = [15, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodo:
         for parametro_i in parametro:
@@ -1439,7 +1442,7 @@ def anadirEMARelativa(dataframe):
 
 def anadirSMARelativa(dataframe):
     df = dataframe
-    periodos = [3, 5, 10, 15, 20]
+    periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1454,11 +1457,11 @@ def anadirHammerRangosRelativa(dataframe):
     # Se generan varias features, iterando con varias combinaciones de parámetros hammer
     # [1, 2, 3, 4, 10]
     # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2, 3, 5, 9]
-    diasPreviosB = [1, 2, 3, 5, 9]
-    parametroA = ['high', 'low']
-    parametroB = ['high', 'low']
-    parametroC = ['high', 'low']
+    diasPreviosA = [1, 2, 3, 4, 5]
+    diasPreviosB = [1, 2, 3, 4, 5]
+    parametroA = ['high', 'low', 'volume']
+    parametroB = ['high', 'low', 'volume']
+    parametroC = ['high', 'low', 'volume']
 
     for diasPreviosA_i in diasPreviosA:
         for diasPreviosB_i in diasPreviosB:
@@ -1467,10 +1470,12 @@ def anadirHammerRangosRelativa(dataframe):
                     for parametroC_i in parametroC:
                         nombreFeature = "hammer" + str(diasPreviosA_i) + "y" + str(
                             diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
-                        df[nombreFeature] = (calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
-                                                               diasPreviosB=diasPreviosB_i, parametroA=parametroA_i,
-                                                               parametroB=parametroB_i, parametroC=parametroC_i) -
-                                             dataframe[parametroC_i]) / dataframe[parametroC_i]
+                        df[nombreFeature] = 1 + 100000 * (calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
+                                                                            diasPreviosB=diasPreviosB_i,
+                                                                            parametroA=parametroA_i,
+                                                                            parametroB=parametroB_i,
+                                                                            parametroC=parametroC_i) -
+                                                          dataframe[parametroC_i]) / dataframe[parametroC_i]
 
     return df
 
@@ -1488,8 +1493,8 @@ def anadirvwapRelativa(dataframe):
 
 def anadirDistanciaAbollingerRelativa(dataframe):
     df = dataframe
-    parametroA = [2, 3, 4, 5]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
-    parametroB = [2, 3, 4, 5]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroA = [15, 50]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroB = [15, 50]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
     parametroC = ['adjclose', 'volume']
     for parametroA_i in parametroA:
         for parametroB_i in parametroB:
@@ -1498,15 +1503,18 @@ def anadirDistanciaAbollingerRelativa(dataframe):
                 nombreFeatureBU = "bollingerBU" + str(parametroA_i) + "-" + str(parametroB_i) + parametroC_i
                 nombreFeatureBL = "bollingerBL" + str(parametroA_i) + "-" + str(parametroB_i) + parametroC_i
                 MA, BU, BL = computebollinger_bands(dataframe, parametroA_i, parametroB_i)
-                df[nombreFeatureMA] = (distanciaTantoPorUno(df[parametroC_i], MA) - df[parametroC_i]) / df[parametroC_i]
-                df[nombreFeatureBU] = (distanciaTantoPorUno(df[parametroC_i], BU) - df[parametroC_i]) / df[parametroC_i]
-                df[nombreFeatureBL] = (distanciaTantoPorUno(df[parametroC_i], BL) - df[parametroC_i]) / df[parametroC_i]
+                df[nombreFeatureMA] = 1 + 100000 * (distanciaTantoPorUno(df[parametroC_i], MA) - df[parametroC_i]) / df[
+                    parametroC_i]
+                df[nombreFeatureBU] = 1 + 100000 * (distanciaTantoPorUno(df[parametroC_i], BU) - df[parametroC_i]) / df[
+                    parametroC_i]
+                df[nombreFeatureBL] = 1 + 100000 * (distanciaTantoPorUno(df[parametroC_i], BL) - df[parametroC_i]) / df[
+                    parametroC_i]
     return df
 
 
 def anadirATR(dataframe):
     df = dataframe
-    periodos = [3, 5, 8]
+    periodos = [10, 15, 25]
     for periodo_i in periodos:
         nombreFeature = "atr" + str(periodo_i)
         df[nombreFeature] = computeATR(dataframe, periodo_i)
@@ -1515,7 +1523,7 @@ def anadirATR(dataframe):
 
 def anadirCCI(dataframe):
     df = dataframe
-    periodos = [3, 5, 8]
+    periodos = [15, 25, 40, 50]
     for periodo_i in periodos:
         nombreFeature = "cci" + str(periodo_i)
         df[nombreFeature] = computeCCI(dataframe, periodo_i)
@@ -1527,7 +1535,7 @@ def anadircombinacionsimpleRelativa(dataframe):
     df = dataframe
     parametroA = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
     parametroB = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
-    periodo = [1, 2, 3, 4, 5]
+    periodo = [1, 2, 3]
     for periodo_i in periodo:
         for parametroA_i in parametroA:
             for parametroB_i in parametroB:
@@ -1539,7 +1547,7 @@ def anadircombinacionsimpleRelativa(dataframe):
 
 def anadiraaron(dataframe):
     df = dataframe
-    periodo = [1, 3, 5]
+    periodo = [15, 25, 40, 50]
     for periodo_i in periodo:
         nombreFeature = "aaron-" + str(periodo_i)
         df[nombreFeature] = computeaaron(df, periodo_i)
@@ -1735,7 +1743,7 @@ def distanciaTantoPorUno(A, B):
     return (B - A) / A
 
 
-def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibujoFeatures=""):
+def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibujoFeatures="", carpeta=""):
     # Aleatorización de datos
     df = aleatorizarDatos(datos)
 
@@ -1747,7 +1755,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
 
     # Imbalanced data: se transforma el dataset
     # transform the dataset
-    smote = SMOTEENN(random_state=42)
+    smote = SMOTEENN()
     X_train, y_train = smote.fit_resample(X_train, y_train)
 
     params = {'objective': 'binary',
@@ -1758,7 +1766,7 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
               'min_data_in_leaf': 32,
               'num_leaves': 1024,
               }
-    model = lgb.LGBMClassifier(**params, n_estimators=50)
+    model = lgb.LGBMClassifier(**params, n_estimators=100)
     model.fit(X_train, y_train,
               eval_set=[(X_train, y_train), (X_test, y_test)])
 
@@ -1785,8 +1793,9 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
         feature_importance = pd.concat([feature_importance, fold_importance], axis=0)
 
         # Se pintan las primeras x features
-        cols = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
-            by="importance", ascending=False)[:10].index
+        cols = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(by="importance",
+                                                                                                   ascending=False)[
+               :10].index
 
         best_features = feature_importance.loc[feature_importance.feature.isin(cols)]
         features_ordenadas = best_features.sort_values(by="importance", ascending=False)
@@ -1806,7 +1815,9 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     cm = confusion_matrix(y_test, y_pred_test)
     cm_matrix = pd.DataFrame(data=cm, columns=['Actual Positive:1', 'Actual Negative:0'],
                              index=['Predict Positive:1', 'Predict Negative:0'])
-    sns.heatmap(cm_matrix, annot=True, fmt='d', cmap='YlGnBu')
+    svm=sns.heatmap(cm_matrix, annot=True, fmt='d', cmap='YlGnBu')
+    figure = svm.get_figure()
+    figure.savefig(carpeta+'heatmapAlGenerarModeloLightGBM.png', dpi=400)
 
     # DEBUG:
     calculaPrecision(y_test, y_pred_test)
@@ -1867,8 +1878,8 @@ def clean_dataset(df):
 def divideDatosParaTrainTestXY(datos):
     # Se separan features de TARGET, y se quitan columnas no numéricas
     X, y = limpiaDatosParaUsarModelo(datos)
-    print("tamano: ", str(X.size) +" x "+str(y.size))
-    X_A, X_B, y_A, y_B = train_test_split(X, y, stratify=y, test_size=0.5, random_state=0)
+    print("tamano: ", str(X.size) + " x " + str(y.size))
+    X_A, X_B, y_A, y_B = train_test_split(X, y, stratify=y, test_size=0.5)
     return X_A, X_B, y_A, y_B
 
 
@@ -1924,14 +1935,14 @@ def predictorConProba(modelo, X, umbralProba=0.8, analizarResultado=False, y_sol
     return aux["pred"], aux["proba"]
 
 
-def creaModelo(filepathModeloAGuardar):
+def creaModelo(filepathModeloAGuardar, descargarInternetParaGenerarModelo=True):
     print("----------------------------------------------------------")
     print("--- GENERADOR DE MODELO -----")
     print("----------------------------------------------------------")
 
     # Descarga de la información
-    descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsvBasica,
-                      indiceComienzoListaEmpresas)
+    if descargarInternetParaGenerarModelo:
+        descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsvBasica, indiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, nombreFicheroCsvBasica, carpeta, nombreFicheroCsvAvanzado)
@@ -1944,13 +1955,17 @@ def creaModelo(filepathModeloAGuardar):
 
     # Generación de modelo ya evaluado
     modelo = generaModeloLightGBM(datos=datosTrainTest, metrica="binary_logloss", pintarFeatures=True,
-                                  pathCompletoDibujoFeatures=carpeta + featuresporimportancia)
+                                  pathCompletoDibujoFeatures=carpeta + featuresporimportancia, carpeta=carpeta)
 
     # Se valida el modelo con datos independientes
     X_valid, y_valid = limpiaDatosParaUsarModelo(datosValidacion)
     y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=0.5, analizarResultado=True,
                                                     y_solucionParaAnalisis=y_valid,
                                                     mensajeDebug="Análisis con datos INDEPENDIENTES (VALIDACIÓN) y usando la proba para predecir: ")
+
+    # Se añaden las columnas de predicción y probabilidad
+    # datosValidacion = pd.concat([datosValidacion, y_pred_valid], axis=1)
+    # datosValidacion = pd.concat([datosValidacion, y_pred_valid], axis=1)
 
     # Análisis de sólo las filas donde invertir
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
@@ -1973,8 +1988,7 @@ def predecir(pathModelo, umbralProba=0.5):
 
     # Descarga de la información
     descargaDatosACsv(PREDICCIONcuantasEmpresas, PREDICCIONstartDate, PREDICCIONendDate, carpeta,
-                      PREDICCIONnombreFicheroCsvBasica,
-                      offsetEmpresas=PREDICCIONindiceComienzoListaEmpresas)
+                      PREDICCIONnombreFicheroCsvBasica, offsetEmpresas=PREDICCIONindiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, PREDICCIONnombreFicheroCsvBasica, carpeta, PREDICCIONnombreFicheroCsvAvanzado)
@@ -2008,21 +2022,33 @@ def predecir(pathModelo, umbralProba=0.5):
     return pathDondeInvertir
 
 
-#################################################
-#################################################
-# GENERADOR DE MODELO Y SU VALIDACIÓN
-#################################################
-#################################################
-# Se genera el modelo (con validación interna)):
-modelo = creaModelo(pathModelo)
+def fxn():
+    warnings.warn("deprecated", DeprecationWarning)
+
 
 #################################################
 #################################################
-# PREDICTOR
+# SE IGNORAN LOS WARNINGS, PARA NO DESBORDAR LOS LOGS DE KAGGLE
 #################################################
 #################################################
-# Se predice:
-predecir(pathModelo, umbralProba=0.5)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    fxn()
+    #################################################
+    #################################################
+    # GENERADOR DE MODELO Y SU VALIDACIÓN
+    #################################################
+    #################################################
+    # Se genera el modelo (con validación interna)):
+    modelo = creaModelo(pathModelo, descargarInternetParaGenerarModelo=descargarInternetParaGenerarModelo)
+
+    #################################################
+    #################################################
+    # PREDICTOR
+    #################################################
+    #################################################
+    # Se predice:
+    predecir(pathModelo, umbralProba=0.5)
 ######################################################################
 
 print("...")
