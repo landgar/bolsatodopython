@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import os
+import warnings
 from datetime import date
 from datetime import timedelta
 from random import randint
@@ -26,8 +27,6 @@ from imblearn.combine import *
 from sklearn import metrics
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
-import math
-import warnings
 
 #################################################
 #################################################
@@ -41,12 +40,12 @@ carpeta = "/home/t151521/Descargas/prueba/"
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 30
-indiceComienzoListaEmpresas = 1000
-descargarInternetParaGenerarModelo= False
+cuantasEmpresas = 50
+indiceComienzoListaEmpresas = 500
+descargarInternetParaGenerarModelo = True
 # Para predicción
 PREDICCIONcuantasEmpresas = 50
-PREDICCIONindiceComienzoListaEmpresas = 3000
+PREDICCIONindiceComienzoListaEmpresas = 1500
 
 # Para creación de modelo
 nombreFicheroCsvBasica = "infosucio.csv"
@@ -1183,7 +1182,7 @@ def getEmpresas(empresasMaximas, startDate, endDate, offsetEmpresas, mercado):
 
 # Guardar CSV con la información de las empresas
 def descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsv, offsetEmpresas):
-    mercado = "OTHER"
+    mercado = "NASDAQ"
     datos = getEmpresas(cuantasEmpresas, startDate, endDate, offsetEmpresas, mercado)
     guardarDataframeEnCsv(dataframe=datos, filepath=carpeta + nombreFicheroCsv)
 
@@ -1289,13 +1288,13 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 5
+    periodo = 10
 
     # Se añade el incremento en porcentaje
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=2, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=20, periodo=periodo)
 
     return datos
 
@@ -1340,10 +1339,10 @@ def aleatorizarDatos(datos):
 def anadirParametrosAvanzados(dataframe):
     df = dataframe
 
-    df = anadirRSIRelativa(df)
-    df = anadirMACDRelativa(df)
-    df = anadirMACDsigRelativa(df)
-    df = anadirMACDhistRelativa(df)
+    df = anadirRSI(df)
+    df = anadirMACD(df)
+    df = anadirMACDsigydif(df)
+    df = anadirMACDhist(df)
     df = anadirlagRelativa(df)
     df = anadirFearAndGreed(df)
     df = anadirEMARelativa(df)
@@ -1352,13 +1351,18 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirvwapRelativa(df)
     df = anadirDistanciaAbollingerRelativa(df)
     df = anadirATR(df)
-    # df = anadirCCI(df)
-    df = anadircombinacionsimpleRelativa(df)
+    df = anadirCCI(df)
+    df = anadirsupernovaTipoA(df)
+    df = anadirsupernovaTipoB(df)
+    df = anadirsupernovaTipoC(df)
+    df = anadirsupernovaTipoD(df)
+    df = anadiradl(df)
+    df = anadirstochastic_oscillator(df)
 
     return df
 
 
-def anadirRSIRelativa(dataframe):
+def anadirRSI(dataframe):
     df = dataframe
     periodos = [15, 25, 50]  # SIEMPRE MAYOR O IGUAL QUE 3
     parametro = ['adjclose', 'volume']
@@ -1367,12 +1371,11 @@ def anadirRSIRelativa(dataframe):
             nombreFeature = "RSI" + parametro_i + str(periodo_i)
             # FastEMA = 12 period EMA from closing price
             # SlowEMA = 26 period EMA from closing price
-            df[nombreFeature] = (computeRSI(dataframe[parametro_i], periodo_i) - dataframe[parametro_i]) / dataframe[
-                parametro_i]
+            df[nombreFeature] = computeRSI(dataframe[parametro_i], periodo_i)
     return df
 
 
-def anadirMACDRelativa(dataframe):
+def anadirMACD(dataframe):
     df = dataframe
     periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
@@ -1381,38 +1384,42 @@ def anadirMACDRelativa(dataframe):
             nombreFeature = "MACD" + parametro_i + str(periodo_i)
             # FastEMA = 12 period EMA from closing price
             # SlowEMA = 26 period EMA from closing price
-            df[nombreFeature] = (computeMACD(dataframe[parametro_i], 12, 26, periodo_i) - dataframe[parametro_i]) / \
-                                dataframe[parametro_i]
+            df[nombreFeature] = computeMACD(dataframe[parametro_i], 12, 26, periodo_i)
     return df
 
 
-def anadirMACDsigRelativa(dataframe):
+def anadirMACDsigydif(dataframe):
     df = dataframe
     periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
+    lag = [0, 1, 2, 3]
     for periodo_i in periodos:
         for parametro_i in parametro:
-            nombreFeature = "MACDsig" + parametro_i + str(periodo_i)
-            df[nombreFeature] = (computeMACDsig(dataframe[parametro_i], 12, 26, periodo_i) - dataframe[parametro_i]) / \
-                                dataframe[parametro_i]
+            nombreFeature = "MACDsig-" + parametro_i + "-" + str(periodo_i)
+            macdsig = computeMACDsig(dataframe[parametro_i], 12, 26, periodo_i)
+            df[nombreFeature] = macdsig
+            for lag_i in lag:
+                dfdesplazado = computelag(dataframe[parametro_i], lag_i)
+                macddesplazado = computeMACD(dfdesplazado, 12, 26, periodo_i)
+                nombreFeaturedif = "MACDdif-" + parametro_i + "-" + str(periodo_i) + "-" + str(lag_i)
+                df[nombreFeaturedif] = macddesplazado - macdsig
     return df
 
 
-def anadirMACDhistRelativa(dataframe):
+def anadirMACDhist(dataframe):
     df = dataframe
     periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
             nombreFeature = "MACDhist" + parametro_i + str(periodo_i)
-            df[nombreFeature] = (computeMACDhist(dataframe[parametro_i], 12, 26, periodo_i) - dataframe[parametro_i]) / \
-                                dataframe[parametro_i]
+            df[nombreFeature] = computeMACDhist(dataframe[parametro_i], 12, 26, periodo_i)
     return df
 
 
 def anadirlagRelativa(dataframe):
     df = dataframe
-    lag = [1, 2, 5]
+    lag = [1, 2, 5, 10, 15]
     parametro = ['low', 'high', 'volume']
     for lag_i in lag:
         for parametro_i in parametro:
@@ -1457,8 +1464,8 @@ def anadirHammerRangosRelativa(dataframe):
     # Se generan varias features, iterando con varias combinaciones de parámetros hammer
     # [1, 2, 3, 4, 10]
     # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2, 3, 4, 5]
-    diasPreviosB = [1, 2, 3, 4, 5]
+    diasPreviosA = [1, 2, 3, 4, 10]
+    diasPreviosB = [1, 2, 3, 4, 10]
     parametroA = ['high', 'low', 'volume']
     parametroB = ['high', 'low', 'volume']
     parametroC = ['high', 'low', 'volume']
@@ -1470,12 +1477,12 @@ def anadirHammerRangosRelativa(dataframe):
                     for parametroC_i in parametroC:
                         nombreFeature = "hammer" + str(diasPreviosA_i) + "y" + str(
                             diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
-                        df[nombreFeature] = 1 + 100000 * (calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
-                                                                            diasPreviosB=diasPreviosB_i,
-                                                                            parametroA=parametroA_i,
-                                                                            parametroB=parametroB_i,
-                                                                            parametroC=parametroC_i) -
-                                                          dataframe[parametroC_i]) / dataframe[parametroC_i]
+                        df[nombreFeature] = (calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
+                                                               diasPreviosB=diasPreviosB_i,
+                                                               parametroA=parametroA_i,
+                                                               parametroB=parametroB_i,
+                                                               parametroC=parametroC_i) -
+                                             dataframe[parametroC_i]) / dataframe[parametroC_i]
 
     return df
 
@@ -1493,8 +1500,8 @@ def anadirvwapRelativa(dataframe):
 
 def anadirDistanciaAbollingerRelativa(dataframe):
     df = dataframe
-    parametroA = [15, 50]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
-    parametroB = [15, 50]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroA = [10, 20]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroB = [10, 20]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
     parametroC = ['adjclose', 'volume']
     for parametroA_i in parametroA:
         for parametroB_i in parametroB:
@@ -1514,7 +1521,7 @@ def anadirDistanciaAbollingerRelativa(dataframe):
 
 def anadirATR(dataframe):
     df = dataframe
-    periodos = [10, 15, 25]
+    periodos = [10, 15, 20, 25, 30, 35, 40]
     for periodo_i in periodos:
         nombreFeature = "atr" + str(periodo_i)
         df[nombreFeature] = computeATR(dataframe, periodo_i)
@@ -1530,18 +1537,143 @@ def anadirCCI(dataframe):
     return df
 
 
-# Calcula las diferencias en porcentaje entre unos parámetros y otros, entre hoy y/o días anteriores
-def anadircombinacionsimpleRelativa(dataframe):
+#  Variación de la high positiva en x días (periodo acumulado de salto) respecto de la mediana,
+#  amplificado por el volumen relativo
+def anadirsupernovaTipoA(dataframe):
     df = dataframe
-    parametroA = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
-    parametroB = ['close', 'high', 'open', 'low', 'adjclose', 'volume']
-    periodo = [1, 2, 3]
+
+    # Periodos
+    periodo = [2, 3, 5, 10, 20]
+
+    # salto high (variación en 1 día)
+    highDesplazado1 = computeDerivadaDesfase(df['high'], 1)
+    variacionHigh1 = df['high'] - highDesplazado1  # salto de 1 día
+    variacionHigh1mediana = computeMedian(variacionHigh1)  # mediana del salto
+
+    # Variación relativa de volumen
+    mediaVolumen = computeMedian(df['volume'])
+    volumenRelativo = df['volume'] / mediaVolumen
+
     for periodo_i in periodo:
-        for parametroA_i in parametroA:
-            for parametroB_i in parametroB:
-                nombreFeature = "simple-" + parametroA_i + "-" + parametroB_i + "-" + str(periodo_i)
-                Bdesplazado = computelag(df[parametroB_i], periodo_i)
-                df[nombreFeature] = (df[parametroA_i] - Bdesplazado) / df[parametroA_i]
+        # salto high en x días (salto de x días)
+        highDesplazadoX = computeDerivadaDesfase(df['high'], periodo_i)
+        variacionHighX = df['high'] - highDesplazadoX  # salto de x días (salto de x días)
+        variacionRelativaHighX = variacionHighX / variacionHigh1mediana  # Tamaño relativo de salto de x días respecto de la mediana de salto
+
+        nombreFeature = "supernovaTipoA-" + str(periodo_i)
+        df[nombreFeature] = variacionRelativaHighX * volumenRelativo
+
+    return df
+
+
+#  High positiva en A días respecto de la mediana del high en ese periodo,
+#  amplificado por el volumen relativo en B días.
+#  Si el high relativo es negativo, se reemplazará con 0.
+def anadirsupernovaTipoB(dataframe):
+    df = dataframe
+
+    # Periodos
+    periodoA = [3, 5, 10, 15, 30]
+    periodoB = [5, 10, 15, 20, 30]
+
+    for periodoA_i in periodoA:
+        for periodoB_i in periodoB:
+            # high relativa en A días
+            highMedianaA = computeMedian(df['high'][:periodoA_i])  # mediana del high
+            highRelativaA = df['high'] / highMedianaA
+            #highRelativaA.clip(lower=0)
+
+            # Volumen relativo en B días
+            mediaVolumenB = computeMedian(df['volume'][:periodoB_i])
+            volumenRelativoB = df['volume'] / mediaVolumenB
+
+            nombreFeature = "supernovaTipoB-" + str(periodoA_i) + "-" + str(periodoB_i)
+            df[nombreFeature] = highRelativaA * volumenRelativoB
+
+    return df
+
+
+#  Idea: high muy por encima de media en periodo grande (20 días: B) (tomar valor relativo).
+#  Además, vela de subida fuerte en periodo pequeño (4 días: A) (es decir, high máximo de hace A días por
+#  encima de media de A días), seguida de vela roja de freno fuerte (es decir, high muy por debajo del máximo)
+#  y 2 velas verdes
+#  (velas de 0 y 1 días antes) que no superan el máximo, ni bajan del mínimo.
+#  Amplificado por volumen relativo fuerte en periodo pequeño frente periodo grande (B).
+#   Si no de da la orientación esperada, multiplicar por 0 en cada parámetro
+def anadirsupernovaTipoC(dataframe):
+    df = dataframe
+
+    # Periodos
+    periodoA = [3, 4, 5, 7]
+    periodoB = [15, 20, 30]
+
+    for periodoA_i in periodoA:
+        for periodoB_i in periodoB:
+            # high relativa en A días
+            highMedianaA = computeMedian(df['high'][:periodoA_i])  # mediana del high
+            highRelativaA = df['high'] / highMedianaA
+            highRelativaA.clip(lower=0)
+
+            # high máxima en A días
+            highMaxA = computeMaximo(df['high'][:periodoA_i])  # max del high
+            highMaxRelativaA = df['high'] / highMedianaA
+            highMaxRelativaA.clip(lower=0)
+
+            # high relativa en B días
+            highMedianaB = computeMedian(df['high'][:periodoB_i])  # mediana del high
+            highRelativaB = df['high'] / highMedianaB
+            highRelativaB.clip(lower=0)
+
+            # Vela de hace 4 días
+            adjcloseDesplazado4 = computeDerivadaDesfase(df['adjclose'], 4)
+            openDesplazado4 = computeDerivadaDesfase(df['open'], 4)
+            vela4 = adjcloseDesplazado4 - openDesplazado4  # Vela de hace 4 días
+            vela4.clip(lower=0)
+
+            # Vela de hace 1 días
+            adjcloseDesplazado1 = computeDerivadaDesfase(df['adjclose'], 1)
+            openDesplazado1 = computeDerivadaDesfase(df['open'], 1)
+            vela1 = adjcloseDesplazado1 - openDesplazado1  # Vela de hace 1 días
+            vela1.clip(lower=0)
+
+            # Vela de hace 0 días
+            adjcloseDesplazado0 = computeDerivadaDesfase(df['adjclose'], 0)
+            openDesplazado0 = computeDerivadaDesfase(df['open'], 0)
+            vela0 = adjcloseDesplazado0 - openDesplazado0  # Vela de hace 0 días
+            vela0.clip(lower=0)
+
+            # Volumen AB
+            mediaVolumenA = computeMedian(df['volume'][:periodoA_i])
+            mediaVolumenB = computeMedian(df['volume'][:periodoB_i])
+            volumenRelativoAB = mediaVolumenA / mediaVolumenB
+            if volumenRelativoAB < 0:
+                volumenRelativoAB = 0
+
+            nombreFeature = "supernovaTipoC-" + str(periodoA_i) + "-" + str(periodoB_i)
+            df[nombreFeature] = highRelativaB * highMaxRelativaA * vela4 * vela1 * vela0 * volumenRelativoAB
+
+    return df
+
+#  High positiva en x días respecto de la mediana del high,
+#  amplificado por el volumen relativo en x días
+def anadirsupernovaTipoD(dataframe):
+    df = dataframe
+
+    # Periodos
+    periodo = [5, 10, 15, 20, 30]
+
+    for periodo_i in periodo:
+        # high relativa en x días
+        highMedianaX = computeMedian(df['high'][:periodo_i])  # mediana del high
+        highRelativaX=df['high']/highMedianaX
+
+        # Volumen relativo en x días
+        mediaVolumenX = computeMedian(df['volume'][:periodo_i])
+        volumenRelativoX = df['volume'] / mediaVolumenX
+
+        nombreFeature = "supernovaTipoD-" + str(periodo_i)
+        df[nombreFeature] = highRelativaX * volumenRelativoX
+
     return df
 
 
@@ -1549,8 +1681,32 @@ def anadiraaron(dataframe):
     df = dataframe
     periodo = [15, 25, 40, 50]
     for periodo_i in periodo:
-        nombreFeature = "aaron-" + str(periodo_i)
-        df[nombreFeature] = computeaaron(df, periodo_i)
+        nombreFeatureUp= "aaron-up-" + str(periodo_i)
+        nombreFeatureDown = "aaron-down-" + str(periodo_i)
+        salida = computearoon(df, periodo_i)
+        df[nombreFeatureUp] = salida[0]
+        df[nombreFeatureDown] = salida[1]
+
+    return df
+
+
+def anadiradl(dataframe):
+    df = dataframe
+    nombreFeature = "adl"
+    df[nombreFeature] =computeadl(data=df, high_col="high", low_col="low", close_col="adjclose", volume_col="volume")
+    return df
+
+def anadirstochastic_oscillator(dataframe):
+    df = dataframe
+    periodo = [15, 25, 40, 50]
+    for periodo_i in periodo:
+        nombreFeaturek = "stochastic-k-" + str(periodo_i)
+        nombreFeatured = "stochastic-d-" + str(periodo_i)
+        nombreFeaturekd = "stochastic-kd-" + str(periodo_i)
+        salida= computestochastic_oscillator(df, N=periodo_i, M=3)
+        df[nombreFeaturek] = salida[0]
+        df[nombreFeatured] = salida[1]
+        df[nombreFeaturekd] = salida[0] - salida[1]
     return df
 
 
@@ -1719,28 +1875,115 @@ def computeATR(dataframe, n):
 
 
 # Commodity Channel Index
-def computeCCI(dataframe, ndays):
-    df = dataframe
-    tp = (df['high'] + df['low'] + df['close']) / 3
-    sma = df['TP'].rolling(ndays).mean()
-    mad = df['TP'].rolling(ndays).apply(lambda x: pd.Series(x).mad())
-    return (tp - sma) / (0.015 * mad)
+def computeCCI(dataframe, n, constant=0.015):
+    """
+    Calculates the Commodity Channel Index (CCI) for a given set of prices and period
+
+    Parameters:
+    prices (list or np.array): A list or array of historical prices
+    n (int): The number of periods to calculate the CCI over
+    constant (float): The constant used to calculate the mean deviation
+
+    Returns:
+    list: A list of CCI values for each period
+    """
+
+    # Calculate typical price
+    tp = (dataframe['high'] + dataframe['low'] + dataframe['adjclose']) / 3
+
+    # Calculate the moving average of the typical price
+    ma_tp = tp.rolling(n).mean()
+
+    # Calculate the mean deviation
+    md = np.abs(tp - ma_tp).rolling(n).mean()
+
+    # Calculate the CCI
+    cci = (tp - ma_tp) / (constant * md)
+
+    return cci
 
 
-# Aaron oscilator
-def computeaaron(dataframe, n):
-    df = dataframe
-    aroon_up = 100 * np.sliding_window_view(df['High'], n + 1).argmax(1) / n
-    aroon_down = 100 * np.sliding_window_view(df['Low'], n + 1).argmin(1) / n
+# Aroon oscilator
+def computearoon(data, period=14):
+    aroon_up = []
+    aroon_down = []
 
-    # The original dimensions are trimmedas required by the size of the sliding window
-    aaronup = np.hstack([[np.nan] * n, aroon_up])
-    aarondown = np.hstack([[np.nan] * n, aroon_down])
-    return aaronup, aarondown
+    for i in range(period, len(data)):
+        highest_high = max(data[i - period:i]['high'])
+        lowest_low = min(data[i - period:i]['low'])
+
+        aroon_up.append((period - (i - data[i - period:i]['high'].index(highest_high))) / period * 100)
+        aroon_down.append((period - (i - data[i - period:i]['low'].index(lowest_low))) / period * 100)
+
+    return aroon_up, aroon_down
+
+
+def computestochastic_oscillator(data, N=14, M=3):
+    df=data
+    df['low_N'] = df['low'].rolling(N).min()
+    df['high_N'] = df['high'].rolling(N).max()
+    df['K'] = 100 * (df['adjclose'] - df['low_N']) / \
+                (df['high_N'] - df['low_N'])
+    df['D'] = df['K'].rolling(M).mean()
+    return df['K'], df['D']
+
+def computeMaximo(data):
+    return data.max()
+
+
+def computeMinimo(data):
+    return data.min()
+
+
+def computeMedian(data):
+    return data.median()
 
 
 def distanciaTantoPorUno(A, B):
     return (B - A) / A
+
+
+def tomarprimerosdatos(data, tamano):
+    return data[:tamano]
+
+
+def computeDerivadaDesfase(data, desfase):
+    return data.diff(desfase)
+
+
+
+# Obtiene el ADL (Accumulation Distribution Line indicator)
+def computeadl(data: pd.DataFrame, high_col: str, low_col: str, close_col: str, volume_col: str) -> pd.Series:
+    """
+    Calculates the Accumulation/Distribution Line (ADL) for a given DataFrame.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        DataFrame containing the historical data
+    high_col : str
+        Name of the column containing the high price
+    low_col : str
+        Name of the column containing the low price
+    close_col : str
+        Name of the column containing the close price
+    volume_col : str
+        Name of the column containing the volume
+
+    Returns
+    -------
+    pd.Series
+        The Accumulation/Distribution Line for the given DataFrame
+    """
+    # Calculate money flow multiplier
+    data['mfm'] = ((data[close_col] - data[low_col]) - (data[high_col] - data[close_col])) / (
+                data[high_col] - data[low_col])
+    # Calculate money flow volume
+    data['mfv'] = data['mfm'] * data[volume_col]
+    # Calculate the Accumulation/Distribution Line
+    adl = data['mfv'].cumsum()
+    return adl
+
 
 
 def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibujoFeatures="", carpeta=""):
@@ -1815,19 +2058,19 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
     cm = confusion_matrix(y_test, y_pred_test)
     cm_matrix = pd.DataFrame(data=cm, columns=['Actual Positive:1', 'Actual Negative:0'],
                              index=['Predict Positive:1', 'Predict Negative:0'])
-    svm=sns.heatmap(cm_matrix, annot=True, fmt='d', cmap='YlGnBu')
+    svm = sns.heatmap(cm_matrix, annot=True, fmt='d', cmap='YlGnBu')
     figure = svm.get_figure()
-    figure.savefig(carpeta+'heatmapAlGenerarModeloLightGBM.png', dpi=400)
+    figure.savefig(carpeta + 'heatmapAlGenerarModeloLightGBM.png', dpi=400)
 
     # DEBUG:
     calculaPrecision(y_test, y_pred_test)
 
-    # # DEBUG:
-    # umbral = 0.6
-    # pred, proba = predictorConProba(model, X_test, umbralProba=umbral, analizarResultado=True,
-    #                                 y_solucionParaAnalisis=y_test,
-    #                                 mensajeDebug="Análisis en la creación el modelo mirando la probabilidad de TARGET==1 y filtrando por proba: " + str(
-    #                                     umbral))
+    # DEBUG:
+    umbral = 0.6
+    pred, proba = predictorConProba(model, X_test, umbralProba=umbral, analizarResultado=True,
+                                    y_solucionParaAnalisis=y_test,
+                                    mensajeDebug="Análisis en la creación el modelo mirando la probabilidad de TARGET==1 y filtrando por proba: " + str(
+                                        umbral))
 
     return model
 
@@ -1922,7 +2165,7 @@ def predictorConProba(modelo, X, umbralProba=0.8, analizarResultado=False, y_sol
     threshold = umbralProba
     aux["pred"] = aux["proba"].apply(lambda el: 1.0 if el >= threshold else 0.0)
 
-    print("umbralProba: ", umbralProba)
+    print("Umbral de probabilidad (umbralProba): ", umbralProba)
 
     if analizarResultado == True:
         print(mensajeDebug)
@@ -1940,9 +2183,10 @@ def creaModelo(filepathModeloAGuardar, descargarInternetParaGenerarModelo=True):
     print("--- GENERADOR DE MODELO -----")
     print("----------------------------------------------------------")
 
-    # Descarga de la información
-    if descargarInternetParaGenerarModelo:
-        descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsvBasica, indiceComienzoListaEmpresas)
+    # # Descarga de la información
+    # if descargarInternetParaGenerarModelo:
+    #     descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsvBasica,
+    #                       indiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, nombreFicheroCsvBasica, carpeta, nombreFicheroCsvAvanzado)
@@ -1964,8 +2208,8 @@ def creaModelo(filepathModeloAGuardar, descargarInternetParaGenerarModelo=True):
                                                     mensajeDebug="Análisis con datos INDEPENDIENTES (VALIDACIÓN) y usando la proba para predecir: ")
 
     # Se añaden las columnas de predicción y probabilidad
-    # datosValidacion = pd.concat([datosValidacion, y_pred_valid], axis=1)
-    # datosValidacion = pd.concat([datosValidacion, y_pred_valid], axis=1)
+    datosValidacion = datosValidacion.join(y_pred_valid)
+    datosValidacion = datosValidacion.join(y_proba_valid)
 
     # Análisis de sólo las filas donde invertir
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
@@ -1978,17 +2222,14 @@ def creaModelo(filepathModeloAGuardar, descargarInternetParaGenerarModelo=True):
     return modelo
 
 
-def predecir(pathModelo, umbralProba=0.5):
-    print("----------------------------------------------------------")
-    print("--- COMIENZO DE PREDICCIÓN PARA INVERTIR DINERO REAL-----")
-    print("----------------------------------------------------------")
-
+def predecir(pathModelo, umbralProba=0.5, necesitaDescarga=True):
     # Se carga el modelo de predicción, ya entrenado y validado
     modelo = joblib.load(pathModelo)
 
-    # Descarga de la información
-    descargaDatosACsv(PREDICCIONcuantasEmpresas, PREDICCIONstartDate, PREDICCIONendDate, carpeta,
-                      PREDICCIONnombreFicheroCsvBasica, offsetEmpresas=PREDICCIONindiceComienzoListaEmpresas)
+    # # Descarga de la información
+    # if necesitaDescarga:
+    #     descargaDatosACsv(PREDICCIONcuantasEmpresas, PREDICCIONstartDate, PREDICCIONendDate, carpeta,
+    #                       PREDICCIONnombreFicheroCsvBasica, offsetEmpresas=PREDICCIONindiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, PREDICCIONnombreFicheroCsvBasica, carpeta, PREDICCIONnombreFicheroCsvAvanzado)
@@ -2003,7 +2244,7 @@ def predecir(pathModelo, umbralProba=0.5):
     # Análisis de sólo las filas donde invertir
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
     datosValidacion_a_invertir_valid = datos[datos.index.isin(y_pred_a_invertir_valid.index)]
-    pathDondeInvertir = carpeta + PREDICCIONNombreFicheroCSVDondeInvertir
+    pathDondeInvertir = carpeta + "umbral-" + str(umbralProba) + "-" + PREDICCIONNombreFicheroCSVDondeInvertir
     # Se ordena por fecha:
     datosValidacion_a_invertir_valid = ordenarPorFechaMasReciente(datosValidacion_a_invertir_valid)
     print("Fichero CSV con la información donde invertir: ", pathDondeInvertir)
@@ -2015,7 +2256,7 @@ def predecir(pathModelo, umbralProba=0.5):
         datosValidacion_a_invertir_valid.index.isin(y_pred_a_invertir_valid.index)]
     rentaMedia_valid = computeRentabilidadMediaFromIncremento(datosValidacion_a_invertir_valid)
     print("...")
-    print("umbral de probabilidad para escoger el target", umbralProba)
+    print("umbral de probabilidad para escoger el target: ", umbralProba)
     print("RENTA MEDIANA de antigüedades cercanas (ligeramente antiguas) similares a donde invertir: ",
           rentaMedia_valid)
 
@@ -2047,8 +2288,34 @@ with warnings.catch_warnings():
     # PREDICTOR
     #################################################
     #################################################
+    print("#################################################")
+    print("#################################################")
+    print("##########  PREDICTOR ##############")
+    print("#################################################")
+    print("#################################################")
+    print("----------------------------------------------------------")
+    print("--- COMIENZO DE PREDICCIÓN PARA INVERTIR DINERO REAL-----")
+    print("----------------------------------------------------------")
     # Se predice:
-    predecir(pathModelo, umbralProba=0.5)
+    umbral = 0.8
+    print("Predicción con umbral: " + str(umbral))
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=True)
+    print("#################################################")
+    umbral = 0.7
+    print("Predicción con umbral: " + str(umbral))
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
+    print("#################################################")
+    umbral = 0.6
+    print("Predicción con umbral: " + str(umbral))
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
+    print("#################################################")
+    umbral = 0.4
+    print("Predicción con umbral: " + str(umbral))
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
+    print("#################################################")
+    umbral = 0.5
+    print("Predicción con umbral: " + str(umbral))
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
 ######################################################################
 
 print("...")
