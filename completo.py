@@ -27,6 +27,7 @@ from imblearn.combine import *
 from sklearn import metrics
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
+import statistics
 
 #################################################
 #################################################
@@ -36,16 +37,16 @@ from sklearn.model_selection import train_test_split
 
 # Para creación de modelo y predicción
 carpeta = "/home/t151521/Descargas/prueba/"
+descargarInternetParaGenerarModelo = False
 
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 50
-indiceComienzoListaEmpresas = 500
-descargarInternetParaGenerarModelo = True
+cuantasEmpresas = 20
+indiceComienzoListaEmpresas = 300
 # Para predicción
-PREDICCIONcuantasEmpresas = 50
-PREDICCIONindiceComienzoListaEmpresas = 1500
+PREDICCIONcuantasEmpresas = 20
+PREDICCIONindiceComienzoListaEmpresas = 1300
 
 # Para creación de modelo
 nombreFicheroCsvBasica = "infosucio.csv"
@@ -1294,7 +1295,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=15, periodo=periodo)
 
     return datos
 
@@ -1348,7 +1349,6 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirEMARelativa(df)
     df = anadirSMARelativa(df)
     df = anadirHammerRangosRelativa(df)
-    # df = anadirHammerRangosRelativaConVolumen(df)
     df = anadirvwapRelativa(df)
     df = anadirDistanciaAbollingerRelativa(df)
     df = anadirATR(df)
@@ -1357,6 +1357,8 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirsupernovaTipoB(df)
     df = anadirsupernovaTipoC(df)
     df = anadirsupernovaTipoD(df)
+    df = anadirsupernovaTipoE(df)
+    df = anadirsupernovaTipoF(df)
     df = anadiradl(df)
     df = anadirstochastic_oscillator(df)
     df = anadirVolumenRelativo(df)
@@ -1466,8 +1468,8 @@ def anadirHammerRangosRelativa(dataframe):
     # Se generan varias features, iterando con varias combinaciones de parámetros hammer
     # [1, 2, 3, 4, 10]
     # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2, 3, 4, 10]
-    diasPreviosB = [1, 2, 3, 4, 10]
+    diasPreviosA = [1, 2, 3, 4, 10, 15]
+    diasPreviosB = [1, 2, 3, 4, 10, 15]
     parametroA = ['high', 'low', 'volume']
     parametroB = ['high', 'low', 'volume']
     parametroC = ['high', 'low', 'volume']
@@ -1480,38 +1482,6 @@ def anadirHammerRangosRelativa(dataframe):
                         nombreFeature = "hammer" + str(diasPreviosA_i) + "y" + str(
                             diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
                         df[nombreFeature] = (calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
-                                                               diasPreviosB=diasPreviosB_i,
-                                                               parametroA=parametroA_i,
-                                                               parametroB=parametroB_i,
-                                                               parametroC=parametroC_i) -
-                                             dataframe[parametroC_i]) / dataframe[parametroC_i]
-
-    return df
-
-
-def anadirHammerRangosRelativaConVolumen(dataframe):
-    df = dataframe
-    # Se generan varias features, iterando con varias combinaciones de parámetros hammer
-    # [1, 2, 3, 4, 10]
-    # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2, 3, 4, 10]
-    diasPreviosB = [1, 2, 3, 4, 10]
-    parametroA = ['high', 'low', 'volume']
-    parametroB = ['high', 'low', 'volume']
-    parametroC = ['high', 'low', 'volume']
-
-    # Variación relativa de volumen
-    mediaVolumen = computeMedian(df['volume'])
-    volumenRelativo = df['volume'] / mediaVolumen
-
-    for diasPreviosA_i in diasPreviosA:
-        for diasPreviosB_i in diasPreviosB:
-            for parametroA_i in parametroA:
-                for parametroB_i in parametroB:
-                    for parametroC_i in parametroC:
-                        nombreFeature = "hammerConVolumen" + str(diasPreviosA_i) + "y" + str(
-                            diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
-                        df[nombreFeature] = volumenRelativo*(calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
                                                                diasPreviosB=diasPreviosB_i,
                                                                parametroA=parametroA_i,
                                                                parametroB=parametroB_i,
@@ -1615,7 +1585,7 @@ def anadirsupernovaTipoB(dataframe):
             # high relativa en A días
             highMedianaA = computeMedian(df['high'][:periodoA_i])  # mediana del high
             highRelativaA = df['high'] / highMedianaA
-            #highRelativaA.clip(lower=0)
+            highRelativaA = highRelativaA.clip(lower=0)
 
             # Volumen relativo en B días
             mediaVolumenB = computeMedian(df['volume'][:periodoB_i])
@@ -1646,35 +1616,35 @@ def anadirsupernovaTipoC(dataframe):
             # high relativa en A días
             highMedianaA = computeMedian(df['high'][:periodoA_i])  # mediana del high
             highRelativaA = df['high'] / highMedianaA
-            highRelativaA.clip(lower=0)
+            highRelativaA = highRelativaA.clip(lower=0)
 
             # high máxima en A días
             highMaxA = computeMaximo(df['high'][:periodoA_i])  # max del high
             highMaxRelativaA = df['high'] / highMedianaA
-            highMaxRelativaA.clip(lower=0)
+            highMaxRelativaA = highMaxRelativaA.clip(lower=0)
 
             # high relativa en B días
             highMedianaB = computeMedian(df['high'][:periodoB_i])  # mediana del high
             highRelativaB = df['high'] / highMedianaB
-            highRelativaB.clip(lower=0)
+            highRelativaB = highRelativaB.clip(lower=0)
 
             # Vela de hace 4 días
             adjcloseDesplazado4 = computeDerivadaDesfase(df['adjclose'], 4)
             openDesplazado4 = computeDerivadaDesfase(df['open'], 4)
             vela4 = adjcloseDesplazado4 - openDesplazado4  # Vela de hace 4 días
-            vela4.clip(lower=0)
+            vela4 = vela4.clip(lower=0)
 
             # Vela de hace 1 días
             adjcloseDesplazado1 = computeDerivadaDesfase(df['adjclose'], 1)
             openDesplazado1 = computeDerivadaDesfase(df['open'], 1)
             vela1 = adjcloseDesplazado1 - openDesplazado1  # Vela de hace 1 días
-            vela1.clip(lower=0)
+            vela1 = vela1.clip(lower=0)
 
             # Vela de hace 0 días
             adjcloseDesplazado0 = computeDerivadaDesfase(df['adjclose'], 0)
             openDesplazado0 = computeDerivadaDesfase(df['open'], 0)
             vela0 = adjcloseDesplazado0 - openDesplazado0  # Vela de hace 0 días
-            vela0.clip(lower=0)
+            vela0 = vela0.clip(lower=0)
 
             # Volumen AB
             mediaVolumenA = computeMedian(df['volume'][:periodoA_i])
@@ -1688,6 +1658,7 @@ def anadirsupernovaTipoC(dataframe):
 
     return df
 
+
 #  High positiva en x días respecto de la mediana del high,
 #  amplificado por el volumen relativo en x días
 def anadirsupernovaTipoD(dataframe):
@@ -1699,7 +1670,7 @@ def anadirsupernovaTipoD(dataframe):
     for periodo_i in periodo:
         # high relativa en x días
         highMedianaX = computeMedian(df['high'][:periodo_i])  # mediana del high
-        highRelativaX=df['high']/highMedianaX
+        highRelativaX = df['high'] / highMedianaX
 
         # Volumen relativo en x días
         mediaVolumenX = computeMedian(df['volume'][:periodo_i])
@@ -1711,11 +1682,67 @@ def anadirsupernovaTipoD(dataframe):
     return df
 
 
+# Se considerará indicador si hay velas de los últimos días con tamaño positivo creciente y grande relativo respecto
+# del histórico. En volumen lo mismo.
+# Si alguna de estas velas es negativa, se fijará a 0, para que el indicador completo sea 0.
+# la vela de antigüedad 0 pesará el cuadrado frente a la de antigüedad 1.
+def anadirsupernovaTipoE(dataframe):
+    df = dataframe
+
+    # Volumen medio
+    mediaVolumen = computeMedian(df['volume'])
+
+    # Velas
+    df['velaE']=(df['adjclose']-df['open'])
+
+    # Velas relativas (valor absoluto, por velas negativas también)
+    mediaVela = computeMedian(df['velaE'].abs())
+    df['velarelativaE'] =df['velaE']/mediaVela
+
+    # Vela día 0
+    df['fuerzarelativaE-lag0'] = df['velarelativaE'] * df['volume']/mediaVolumen
+    df['fuerzarelativaE-lag0-clip'] = df['fuerzarelativaE-lag0'].clip(lower=0)
+
+    # Vela día 1
+    df['fuerzarelativaE-lag1-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 1).clip(lower=0)
+    df['fuerzarelativaElower0'] =df['fuerzarelativaE-lag0-clip']*df['fuerzarelativaE-lag0-clip']*df['fuerzarelativaE-lag1-clip']
+
+    return df
+
+
+# Se considerará indicador si hay velas de los últimos días con tamaño negativo creciente y grande relativo respecto
+# del histórico. En volumen lo mismo.
+# Si alguna de estas velas es positiva, se fijará a 0, para que el indicador completo sea 0.
+# la vela de antigüedad 0 pesará el cuadrado frente a la de antigüedad 1.
+def anadirsupernovaTipoF(dataframe):
+    df = dataframe
+
+    # Volumen medio
+    mediaVolumen = computeMedian(df['volume'])
+
+    # Velas
+    df['velaF']=(df['adjclose']-df['open'])
+
+    # Velas relativas (valor absoluto, por velas negativas también)
+    mediaVela = computeMedian(df['velaF'].abs())
+    df['velarelativaF'] =df['velaF']/mediaVela
+
+    # Vela día 0
+    df['fuerzarelativaF-lag0'] = df['velarelativaF'] * df['volume']/mediaVolumen
+    df['fuerzarelativaF-lag0-clip'] = -(-df['fuerzarelativaF-lag0']).clip(lower=0)
+
+    # Vela día 1
+    df['fuerzarelativaF-lag1-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 1)).clip(lower=0)
+    df['fuerzarelativaFlower0'] =df['fuerzarelativaF-lag0-clip']*df['fuerzarelativaF-lag0-clip']*df['fuerzarelativaF-lag1-clip']
+
+    return df
+
+
 def anadiraaron(dataframe):
     df = dataframe
     periodo = [15, 25, 40, 50]
     for periodo_i in periodo:
-        nombreFeatureUp= "aaron-up-" + str(periodo_i)
+        nombreFeatureUp = "aaron-up-" + str(periodo_i)
         nombreFeatureDown = "aaron-down-" + str(periodo_i)
         salida = computearoon(df, periodo_i)
         df[nombreFeatureUp] = salida[0]
@@ -1727,8 +1754,9 @@ def anadiraaron(dataframe):
 def anadiradl(dataframe):
     df = dataframe
     nombreFeature = "adl"
-    df[nombreFeature] =computeadl(data=df, high_col="high", low_col="low", close_col="adjclose", volume_col="volume")
+    df[nombreFeature] = computeadl(data=df, high_col="high", low_col="low", close_col="adjclose", volume_col="volume")
     return df
+
 
 def anadirstochastic_oscillator(dataframe):
     df = dataframe
@@ -1737,14 +1765,15 @@ def anadirstochastic_oscillator(dataframe):
         nombreFeaturek = "stochastic-k-" + str(periodo_i)
         nombreFeatured = "stochastic-d-" + str(periodo_i)
         nombreFeaturekd = "stochastic-kd-" + str(periodo_i)
-        salida= computestochastic_oscillator(df, N=periodo_i, M=3)
+        salida = computestochastic_oscillator(df, N=periodo_i, M=3)
         df[nombreFeaturek] = salida[0]
         df[nombreFeatured] = salida[1]
         df[nombreFeaturekd] = salida[0] - salida[1]
     return df
 
+
 def anadirVolumenRelativo(dataframe):
-    df=dataframe
+    df = dataframe
     # Variación relativa de volumen
     mediaVolumen = computeMedian(df['volume'])
     nombreFeature = "volumenrelativo"
@@ -1846,13 +1875,16 @@ def calculate_sma(data, days):
 # CalculadoraHammer
 def calculadoraHammer(data, diasPreviosA, diasPreviosB, parametroA="open", parametroB="low", parametroC="adjclose"):
     # Se calculará en tanto por uno la fuerza del patrón martillo, según:
-    # Hammer = caída inicial (valor positivo si cae) * subida final (valor positivo si sube)
+    # Hammer = caída inicial (valor positivo si cae) * subida final (valor positivo si sube).
+    # Si no es caída o subida, sino lo inverso, se fijará a 0.
     # La caída inicial será: (parametroB  - parametroA), ambos los días previos indicados como parámetro
     # La subida final será: (parametroC - parametroB), donde low será el día previo indicado como parámetro, y el adjclose será de hoy
     caidaInicial = (data[parametroB].shift(diasPreviosB) - data[parametroA].shift(diasPreviosA)) / data[
         parametroA].shift(
         diasPreviosA)
+    caidaInicial = caidaInicial.clip(lower=0)
     subidaFinal = (data[parametroC] - data[parametroB].shift(diasPreviosA)) / data[parametroC]
+    subidaFinal = subidaFinal.clip(lower=0)
     hammer = caidaInicial * subidaFinal
     return hammer
 
@@ -1961,13 +1993,14 @@ def computearoon(data, period=14):
 
 
 def computestochastic_oscillator(data, N=14, M=3):
-    df=data
+    df = data
     df['low_N'] = df['low'].rolling(N).min()
     df['high_N'] = df['high'].rolling(N).max()
     df['K'] = 100 * (df['adjclose'] - df['low_N']) / \
-                (df['high_N'] - df['low_N'])
+              (df['high_N'] - df['low_N'])
     df['D'] = df['K'].rolling(M).mean()
     return df['K'], df['D']
+
 
 def computeMaximo(data):
     return data.max()
@@ -1991,7 +2024,6 @@ def tomarprimerosdatos(data, tamano):
 
 def computeDerivadaDesfase(data, desfase):
     return data.diff(desfase)
-
 
 
 # Obtiene el ADL (Accumulation Distribution Line indicator)
@@ -2019,13 +2051,12 @@ def computeadl(data: pd.DataFrame, high_col: str, low_col: str, close_col: str, 
     """
     # Calculate money flow multiplier
     data['mfm'] = ((data[close_col] - data[low_col]) - (data[high_col] - data[close_col])) / (
-                data[high_col] - data[low_col])
+            data[high_col] - data[low_col])
     # Calculate money flow volume
     data['mfv'] = data['mfm'] * data[volume_col]
     # Calculate the Accumulation/Distribution Line
     adl = data['mfv'].cumsum()
     return adl
-
 
 
 def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibujoFeatures="", carpeta=""):
@@ -2341,23 +2372,23 @@ with warnings.catch_warnings():
     # Se predice:
     umbral = 0.8
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=True)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=True&descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.7
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.6
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.4
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.5
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
 ######################################################################
 
 print("...")
