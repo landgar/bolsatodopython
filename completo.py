@@ -1294,7 +1294,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=20, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
 
     return datos
 
@@ -1348,6 +1348,7 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirEMARelativa(df)
     df = anadirSMARelativa(df)
     df = anadirHammerRangosRelativa(df)
+    # df = anadirHammerRangosRelativaConVolumen(df)
     df = anadirvwapRelativa(df)
     df = anadirDistanciaAbollingerRelativa(df)
     df = anadirATR(df)
@@ -1358,6 +1359,7 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirsupernovaTipoD(df)
     df = anadiradl(df)
     df = anadirstochastic_oscillator(df)
+    df = anadirVolumenRelativo(df)
 
     return df
 
@@ -1487,6 +1489,38 @@ def anadirHammerRangosRelativa(dataframe):
     return df
 
 
+def anadirHammerRangosRelativaConVolumen(dataframe):
+    df = dataframe
+    # Se generan varias features, iterando con varias combinaciones de parámetros hammer
+    # [1, 2, 3, 4, 10]
+    # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
+    diasPreviosA = [1, 2, 3, 4, 10]
+    diasPreviosB = [1, 2, 3, 4, 10]
+    parametroA = ['high', 'low', 'volume']
+    parametroB = ['high', 'low', 'volume']
+    parametroC = ['high', 'low', 'volume']
+
+    # Variación relativa de volumen
+    mediaVolumen = computeMedian(df['volume'])
+    volumenRelativo = df['volume'] / mediaVolumen
+
+    for diasPreviosA_i in diasPreviosA:
+        for diasPreviosB_i in diasPreviosB:
+            for parametroA_i in parametroA:
+                for parametroB_i in parametroB:
+                    for parametroC_i in parametroC:
+                        nombreFeature = "hammerConVolumen" + str(diasPreviosA_i) + "y" + str(
+                            diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
+                        df[nombreFeature] = volumenRelativo*(calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
+                                                               diasPreviosB=diasPreviosB_i,
+                                                               parametroA=parametroA_i,
+                                                               parametroB=parametroB_i,
+                                                               parametroC=parametroC_i) -
+                                             dataframe[parametroC_i]) / dataframe[parametroC_i]
+
+    return df
+
+
 def anadirvwapRelativa(dataframe):
     df = dataframe
     parametroA = ['adjclose']
@@ -1500,8 +1534,8 @@ def anadirvwapRelativa(dataframe):
 
 def anadirDistanciaAbollingerRelativa(dataframe):
     df = dataframe
-    parametroA = [10, 20]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
-    parametroB = [10, 20]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroA = [10, 20, 30]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroB = [10, 20, 30]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
     parametroC = ['adjclose', 'volume']
     for parametroA_i in parametroA:
         for parametroB_i in parametroB:
@@ -1521,7 +1555,7 @@ def anadirDistanciaAbollingerRelativa(dataframe):
 
 def anadirATR(dataframe):
     df = dataframe
-    periodos = [10, 15, 20, 25, 30, 35, 40]
+    periodos = [5, 10, 15, 20]
     for periodo_i in periodos:
         nombreFeature = "atr" + str(periodo_i)
         df[nombreFeature] = computeATR(dataframe, periodo_i)
@@ -1698,7 +1732,7 @@ def anadiradl(dataframe):
 
 def anadirstochastic_oscillator(dataframe):
     df = dataframe
-    periodo = [15, 25, 40, 50]
+    periodo = [10, 15, 20]
     for periodo_i in periodo:
         nombreFeaturek = "stochastic-k-" + str(periodo_i)
         nombreFeatured = "stochastic-d-" + str(periodo_i)
@@ -1707,6 +1741,14 @@ def anadirstochastic_oscillator(dataframe):
         df[nombreFeaturek] = salida[0]
         df[nombreFeatured] = salida[1]
         df[nombreFeaturekd] = salida[0] - salida[1]
+    return df
+
+def anadirVolumenRelativo(dataframe):
+    df=dataframe
+    # Variación relativa de volumen
+    mediaVolumen = computeMedian(df['volume'])
+    nombreFeature = "volumenrelativo"
+    df[nombreFeature] = df['volume'] / mediaVolumen
     return df
 
 
@@ -2183,10 +2225,10 @@ def creaModelo(filepathModeloAGuardar, descargarInternetParaGenerarModelo=True):
     print("--- GENERADOR DE MODELO -----")
     print("----------------------------------------------------------")
 
-    # # Descarga de la información
-    # if descargarInternetParaGenerarModelo:
-    #     descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsvBasica,
-    #                       indiceComienzoListaEmpresas)
+    # Descarga de la información
+    if descargarInternetParaGenerarModelo:
+        descargaDatosACsv(cuantasEmpresas, startDate, endDate, carpeta, nombreFicheroCsvBasica,
+                          indiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, nombreFicheroCsvBasica, carpeta, nombreFicheroCsvAvanzado)
@@ -2226,10 +2268,10 @@ def predecir(pathModelo, umbralProba=0.5, necesitaDescarga=True):
     # Se carga el modelo de predicción, ya entrenado y validado
     modelo = joblib.load(pathModelo)
 
-    # # Descarga de la información
-    # if necesitaDescarga:
-    #     descargaDatosACsv(PREDICCIONcuantasEmpresas, PREDICCIONstartDate, PREDICCIONendDate, carpeta,
-    #                       PREDICCIONnombreFicheroCsvBasica, offsetEmpresas=PREDICCIONindiceComienzoListaEmpresas)
+    # Descarga de la información
+    if necesitaDescarga:
+        descargaDatosACsv(PREDICCIONcuantasEmpresas, PREDICCIONstartDate, PREDICCIONendDate, carpeta,
+                          PREDICCIONnombreFicheroCsvBasica, offsetEmpresas=PREDICCIONindiceComienzoListaEmpresas)
 
     # Crear parámetros avanzados y target
     procesaInformacion(carpeta, PREDICCIONnombreFicheroCsvBasica, carpeta, PREDICCIONnombreFicheroCsvAvanzado)
