@@ -42,11 +42,11 @@ descargarInternetParaGenerarModelo = False
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 20
-indiceComienzoListaEmpresas = 300
+cuantasEmpresas = 200
+indiceComienzoListaEmpresas = 1000
 # Para predicción
-PREDICCIONcuantasEmpresas = 20
-PREDICCIONindiceComienzoListaEmpresas = 1300
+PREDICCIONcuantasEmpresas = 200
+PREDICCIONindiceComienzoListaEmpresas = 1600
 
 # Para creación de modelo
 nombreFicheroCsvBasica = "infosucio.csv"
@@ -58,7 +58,7 @@ pathModelo = carpeta + "MODELO.scikit"
 PREDICCIONnombreFicheroCsvBasica = "PREDICCIONinfosucio.csv"
 PREDICCIONnombreFicheroCsvAvanzado = "PREDICCIONinfolimpioavanzadoTarget.csv"
 PREDICCIONNombreFicheroCSVDondeInvertir = "PREDICCIONdondeinvertir.csv"
-# Se toman 51 días hacia atrás, hasta ayer (para poder calcular RSI y demás)
+# Se toman xx días hacia atrás, hasta ayer (para poder calcular RSI y demás)
 PREDICCIONstartDate = date.today() - timedelta(days=200)
 PREDICCIONendDate = date.today() - timedelta(days=1)
 
@@ -1289,13 +1289,13 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 10
+    periodo = 5
 
     # Se añade el incremento en porcentaje
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=15, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=5, periodo=periodo)
 
     return datos
 
@@ -1481,12 +1481,11 @@ def anadirHammerRangosRelativa(dataframe):
                     for parametroC_i in parametroC:
                         nombreFeature = "hammer" + str(diasPreviosA_i) + "y" + str(
                             diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
-                        df[nombreFeature] = (calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
-                                                               diasPreviosB=diasPreviosB_i,
-                                                               parametroA=parametroA_i,
-                                                               parametroB=parametroB_i,
-                                                               parametroC=parametroC_i) -
-                                             dataframe[parametroC_i]) / dataframe[parametroC_i]
+                        df[nombreFeature] = calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
+                                                              diasPreviosB=diasPreviosB_i,
+                                                              parametroA=parametroA_i,
+                                                              parametroB=parametroB_i,
+                                                              parametroC=parametroC_i)
 
     return df
 
@@ -1693,19 +1692,20 @@ def anadirsupernovaTipoE(dataframe):
     mediaVolumen = computeMedian(df['volume'])
 
     # Velas
-    df['velaE']=(df['adjclose']-df['open'])
+    df['velaE'] = (df['adjclose'] - df['open'])
 
     # Velas relativas (valor absoluto, por velas negativas también)
     mediaVela = computeMedian(df['velaE'].abs())
-    df['velarelativaE'] =df['velaE']/mediaVela
+    df['velarelativaE'] = df['velaE'] / mediaVela
 
     # Vela día 0
-    df['fuerzarelativaE-lag0'] = df['velarelativaE'] * df['volume']/mediaVolumen
+    df['fuerzarelativaE-lag0'] = df['velarelativaE'] * df['volume'] / mediaVolumen
     df['fuerzarelativaE-lag0-clip'] = df['fuerzarelativaE-lag0'].clip(lower=0)
 
     # Vela día 1
     df['fuerzarelativaE-lag1-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 1).clip(lower=0)
-    df['fuerzarelativaElower0'] =df['fuerzarelativaE-lag0-clip']*df['fuerzarelativaE-lag0-clip']*df['fuerzarelativaE-lag1-clip']
+    df['fuerzarelativaElower0'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
+        'fuerzarelativaE-lag1-clip']
 
     return df
 
@@ -1721,19 +1721,20 @@ def anadirsupernovaTipoF(dataframe):
     mediaVolumen = computeMedian(df['volume'])
 
     # Velas
-    df['velaF']=(df['adjclose']-df['open'])
+    df['velaF'] = (df['adjclose'] - df['open'])
 
     # Velas relativas (valor absoluto, por velas negativas también)
     mediaVela = computeMedian(df['velaF'].abs())
-    df['velarelativaF'] =df['velaF']/mediaVela
+    df['velarelativaF'] = df['velaF'] / mediaVela
 
     # Vela día 0
-    df['fuerzarelativaF-lag0'] = df['velarelativaF'] * df['volume']/mediaVolumen
+    df['fuerzarelativaF-lag0'] = df['velarelativaF'] * df['volume'] / mediaVolumen
     df['fuerzarelativaF-lag0-clip'] = -(-df['fuerzarelativaF-lag0']).clip(lower=0)
 
     # Vela día 1
     df['fuerzarelativaF-lag1-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 1)).clip(lower=0)
-    df['fuerzarelativaFlower0'] =df['fuerzarelativaF-lag0-clip']*df['fuerzarelativaF-lag0-clip']*df['fuerzarelativaF-lag1-clip']
+    df['fuerzarelativaFlower0'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
+        'fuerzarelativaF-lag1-clip']
 
     return df
 
@@ -1883,7 +1884,7 @@ def calculadoraHammer(data, diasPreviosA, diasPreviosB, parametroA="open", param
         parametroA].shift(
         diasPreviosA)
     caidaInicial = caidaInicial.clip(lower=0)
-    subidaFinal = (data[parametroC] - data[parametroB].shift(diasPreviosA)) / data[parametroC]
+    subidaFinal = (data[parametroC] - data[parametroB].shift(diasPreviosB)) / data[parametroC]
     subidaFinal = subidaFinal.clip(lower=0)
     hammer = caidaInicial * subidaFinal
     return hammer
@@ -2372,24 +2373,25 @@ with warnings.catch_warnings():
     # Se predice:
     umbral = 0.8
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=True&descargarInternetParaGenerarModelo)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=True & descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.7
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False & descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.6
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False & descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.4
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False & descargarInternetParaGenerarModelo)
     print("#################################################")
     umbral = 0.5
     print("Predicción con umbral: " + str(umbral))
-    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False&descargarInternetParaGenerarModelo)
+    predecir(pathModelo, umbralProba=umbral, necesitaDescarga=False & descargarInternetParaGenerarModelo)
 ######################################################################
 
 print("...")
 print("FIN")
+
