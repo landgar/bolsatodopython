@@ -27,7 +27,6 @@ from imblearn.combine import *
 from sklearn import metrics
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
-import statistics
 
 #################################################
 #################################################
@@ -42,10 +41,10 @@ descargarInternetParaGenerarModelo = False
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 200
+cuantasEmpresas = 5
 indiceComienzoListaEmpresas = 1000
 # Para predicción
-PREDICCIONcuantasEmpresas = 200
+PREDICCIONcuantasEmpresas = 5
 PREDICCIONindiceComienzoListaEmpresas = 1600
 
 # Para creación de modelo
@@ -1481,11 +1480,11 @@ def anadirHammerRangosRelativa(dataframe):
                     for parametroC_i in parametroC:
                         nombreFeature = "hammer" + str(diasPreviosA_i) + "y" + str(
                             diasPreviosB_i) + parametroA_i + parametroB_i + parametroC_i
-                        df[nombreFeature] = calculadoraHammer(data=dataframe, diasPreviosA=diasPreviosA_i,
-                                                              diasPreviosB=diasPreviosB_i,
-                                                              parametroA=parametroA_i,
-                                                              parametroB=parametroB_i,
-                                                              parametroC=parametroC_i)
+                        df[nombreFeature] = calculadoraHammerRelativa(data=dataframe, diasPreviosA=diasPreviosA_i,
+                                                                      diasPreviosB=diasPreviosB_i,
+                                                                      parametroA=parametroA_i,
+                                                                      parametroB=parametroB_i,
+                                                                      parametroC=parametroC_i)
 
     return df
 
@@ -1874,18 +1873,24 @@ def calculate_sma(data, days):
 
 
 # CalculadoraHammer
-def calculadoraHammer(data, diasPreviosA, diasPreviosB, parametroA="open", parametroB="low", parametroC="adjclose"):
+def calculadoraHammerRelativa(data, diasPreviosA, diasPreviosB, parametroA="open", parametroB="low",
+                              parametroC="adjclose"):
     # Se calculará en tanto por uno la fuerza del patrón martillo, según:
     # Hammer = caída inicial (valor positivo si cae) * subida final (valor positivo si sube).
-    # Si no es caída o subida, sino lo inverso, se fijará a 0.
+    # Si no es caída, sino lo inverso, se fijará a 0.
     # La caída inicial será: (parametroB  - parametroA), ambos los días previos indicados como parámetro
     # La subida final será: (parametroC - parametroB), donde low será el día previo indicado como parámetro, y el adjclose será de hoy
-    caidaInicial = (data[parametroB].shift(diasPreviosB) - data[parametroA].shift(diasPreviosA)) / data[
-        parametroA].shift(
-        diasPreviosA)
+    # De todo se toma el valor relativo al mediano
+    a = data[parametroA] / computeMedian(data[parametroA])
+    b = data[parametroB] / computeMedian(data[parametroB])
+    c = data[parametroC] / computeMedian(data[parametroC])
+    aDesplazado = a.shift(diasPreviosA)
+    bDesplazado = b.shift(diasPreviosB)
+
+    caidaInicial = (bDesplazado - aDesplazado) / aDesplazado
     caidaInicial = caidaInicial.clip(lower=0)
-    subidaFinal = (data[parametroC] - data[parametroB].shift(diasPreviosB)) / data[parametroC]
-    subidaFinal = subidaFinal.clip(lower=0)
+    subidaFinal = (c - bDesplazado) / c
+    # subidaFinal = subidaFinal.clip(lower=0)
     hammer = caidaInicial * subidaFinal
     return hammer
 
@@ -2394,4 +2399,3 @@ with warnings.catch_warnings():
 
 print("...")
 print("FIN")
-
