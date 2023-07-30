@@ -41,11 +41,11 @@ descargarInternetParaGenerarModelo = False
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 5
-indiceComienzoListaEmpresas = 1000
+cuantasEmpresas = 200
+indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 5
-PREDICCIONindiceComienzoListaEmpresas = 1600
+PREDICCIONcuantasEmpresas = 200
+PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Para creación de modelo
 nombreFicheroCsvBasica = "infosucio.csv"
@@ -1294,7 +1294,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=5, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
 
     return datos
 
@@ -1367,7 +1367,7 @@ def anadirParametrosAvanzados(dataframe):
 
 def anadirRSI(dataframe):
     df = dataframe
-    periodos = [15, 25, 50]  # SIEMPRE MAYOR O IGUAL QUE 3
+    periodos = [5, 10, 15, 25, 50]  # SIEMPRE MAYOR O IGUAL QUE 3
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1380,7 +1380,7 @@ def anadirRSI(dataframe):
 
 def anadirMACD(dataframe):
     df = dataframe
-    periodos = [15, 25, 50]
+    periodos = [5, 10, 15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1393,7 +1393,7 @@ def anadirMACD(dataframe):
 
 def anadirMACDsigydif(dataframe):
     df = dataframe
-    periodos = [15, 25, 50]
+    periodos = [5, 10, 15, 25, 50]
     parametro = ['adjclose', 'volume']
     lag = [0, 1, 2, 3]
     for periodo_i in periodos:
@@ -1411,7 +1411,7 @@ def anadirMACDsigydif(dataframe):
 
 def anadirMACDhist(dataframe):
     df = dataframe
-    periodos = [15, 25, 50]
+    periodos = [5, 10, 15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1440,7 +1440,7 @@ def anadirFearAndGreed(dataframe):
 
 def anadirEMARelativa(dataframe):
     df = dataframe
-    periodo = [15, 50]
+    periodo = [5, 10, 15, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodo:
         for parametro_i in parametro:
@@ -1452,7 +1452,7 @@ def anadirEMARelativa(dataframe):
 
 def anadirSMARelativa(dataframe):
     df = dataframe
-    periodos = [15, 25, 50]
+    periodos = [5, 10, 15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1467,8 +1467,8 @@ def anadirHammerRangosRelativa(dataframe):
     # Se generan varias features, iterando con varias combinaciones de parámetros hammer
     # [1, 2, 3, 4, 10]
     # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2, 3, 4, 10, 15]
-    diasPreviosB = [1, 2, 3, 4, 10, 15]
+    diasPreviosA = [1, 2, 3, 4, 5, 10, 15]
+    diasPreviosB = [1, 2, 3, 4, 5, 10, 15]
     parametroA = ['high', 'low', 'volume']
     parametroB = ['high', 'low', 'volume']
     parametroC = ['high', 'low', 'volume']
@@ -1502,8 +1502,8 @@ def anadirvwapRelativa(dataframe):
 
 def anadirDistanciaAbollingerRelativa(dataframe):
     df = dataframe
-    parametroA = [10, 20, 30]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
-    parametroB = [10, 20, 30]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroA = [5, 10, 20, 30]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroB = [5, 10, 20, 30]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
     parametroC = ['adjclose', 'volume']
     for parametroA_i in parametroA:
         for parametroB_i in parametroB:
@@ -1532,7 +1532,7 @@ def anadirATR(dataframe):
 
 def anadirCCI(dataframe):
     df = dataframe
-    periodos = [15, 25, 40, 50]
+    periodos = [5, 10, 15, 25, 40, 50]
     for periodo_i in periodos:
         nombreFeature = "cci" + str(periodo_i)
         df[nombreFeature] = computeCCI(dataframe, periodo_i)
@@ -1606,8 +1606,8 @@ def anadirsupernovaTipoC(dataframe):
     df = dataframe
 
     # Periodos
-    periodoA = [3, 4, 5, 7]
-    periodoB = [15, 20, 30]
+    periodoA = [3, 4, 5, 7, 10, 15]
+    periodoB = [10, 15, 20, 30]
 
     for periodoA_i in periodoA:
         for periodoB_i in periodoB:
@@ -1740,7 +1740,7 @@ def anadirsupernovaTipoF(dataframe):
 
 def anadiraaron(dataframe):
     df = dataframe
-    periodo = [15, 25, 40, 50]
+    periodo = [10, 15, 25, 40, 50]
     for periodo_i in periodo:
         nombreFeatureUp = "aaron-up-" + str(periodo_i)
         nombreFeatureDown = "aaron-down-" + str(periodo_i)
@@ -1760,7 +1760,7 @@ def anadiradl(dataframe):
 
 def anadirstochastic_oscillator(dataframe):
     df = dataframe
-    periodo = [10, 15, 20]
+    periodo = [5, 10, 15, 20]
     for periodo_i in periodo:
         nombreFeaturek = "stochastic-k-" + str(periodo_i)
         nombreFeatured = "stochastic-d-" + str(periodo_i)
@@ -2399,3 +2399,4 @@ with warnings.catch_warnings():
 
 print("...")
 print("FIN")
+
