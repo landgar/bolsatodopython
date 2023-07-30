@@ -1697,14 +1697,27 @@ def anadirsupernovaTipoE(dataframe):
     mediaVela = computeMedian(df['velaE'].abs())
     df['velarelativaE'] = df['velaE'] / mediaVela
 
-    # Vela día 0
-    df['fuerzarelativaE-lag0'] = df['velarelativaE'] * df['volume'] / mediaVolumen
-    df['fuerzarelativaE-lag0-clip'] = df['fuerzarelativaE-lag0'].clip(lower=0)
 
-    # Vela día 1
+    df['fuerzarelativaE-lag0'] = df['velarelativaE'] * df['volume'] / mediaVolumen
+
+    # Velas días x
+    df['fuerzarelativaE-lag0-clip'] = df['fuerzarelativaE-lag0'].clip(lower=0)
     df['fuerzarelativaE-lag1-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 1).clip(lower=0)
-    df['fuerzarelativaElower0'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
+    df['fuerzarelativaE-lag2-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 2).clip(lower=0)
+    df['fuerzarelativaE-lag3-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 3).clip(lower=0)
+    df['fuerzarelativaE-lag4-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 4).clip(lower=0)
+    df['fuerzarelativaE-lag5-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 5).clip(lower=0)
+
+    df['fuerzarelativaElower0-1'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
         'fuerzarelativaE-lag1-clip']
+    df['fuerzarelativaElower0-2'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
+        'fuerzarelativaE-lag2-clip']
+    df['fuerzarelativaElower0-3'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
+        'fuerzarelativaE-lag3-clip']
+    df['fuerzarelativaElower0-4'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
+        'fuerzarelativaE-lag4-clip']
+    df['fuerzarelativaElower0-5'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
+        'fuerzarelativaE-lag5-clip']
 
     return df
 
@@ -1726,14 +1739,26 @@ def anadirsupernovaTipoF(dataframe):
     mediaVela = computeMedian(df['velaF'].abs())
     df['velarelativaF'] = df['velaF'] / mediaVela
 
-    # Vela día 0
     df['fuerzarelativaF-lag0'] = df['velarelativaF'] * df['volume'] / mediaVolumen
-    df['fuerzarelativaF-lag0-clip'] = -(-df['fuerzarelativaF-lag0']).clip(lower=0)
 
-    # Vela día 1
+    # Vela día x
+    df['fuerzarelativaF-lag0-clip'] = -(-df['fuerzarelativaF-lag0']).clip(lower=0)
     df['fuerzarelativaF-lag1-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 1)).clip(lower=0)
-    df['fuerzarelativaFlower0'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
+    df['fuerzarelativaF-lag2-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 2)).clip(lower=0)
+    df['fuerzarelativaF-lag3-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 3)).clip(lower=0)
+    df['fuerzarelativaF-lag4-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 4)).clip(lower=0)
+    df['fuerzarelativaF-lag5-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 5)).clip(lower=0)
+
+    df['fuerzarelativaFlower0-1'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
         'fuerzarelativaF-lag1-clip']
+    df['fuerzarelativaFlower0-2'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
+        'fuerzarelativaF-lag2-clip']
+    df['fuerzarelativaFlower0-3'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
+        'fuerzarelativaF-lag3-clip']
+    df['fuerzarelativaFlower0-4'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
+        'fuerzarelativaF-lag4-clip']
+    df['fuerzarelativaFlower0-5'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
+        'fuerzarelativaF-lag5-clip']
 
     return df
 
