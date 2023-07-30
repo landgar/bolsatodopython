@@ -36,15 +36,15 @@ from sklearn.model_selection import train_test_split
 
 # Para creación de modelo y predicción
 carpeta = "/home/t151521/Descargas/prueba/"
-descargarInternetParaGenerarModelo = False
+descargarInternetParaGenerarModelo = True
 
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 200
+cuantasEmpresas = 10
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 200
+PREDICCIONcuantasEmpresas = 10
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Para creación de modelo
@@ -2025,12 +2025,12 @@ def computearoon(data, period=14):
 
 def computestochastic_oscillator(data, N=14, M=3):
     df = data
-    df['low_N'] = df['low'].rolling(N).min()
-    df['high_N'] = df['high'].rolling(N).max()
-    df['K'] = 100 * (df['adjclose'] - df['low_N']) / \
-              (df['high_N'] - df['low_N'])
-    df['D'] = df['K'].rolling(M).mean()
-    return df['K'], df['D']
+    df['low-'+str(N)] = df['low'].rolling(N).min()
+    df['high-'+str(N)] = df['high'].rolling(N).max()
+    df['K-'+str(N)] = 100 * (df['adjclose'] - df['low-'+str(N)]) / \
+              (df['high-'+str(N)] - df['low-'+str(N)])
+    df['D-'+str(N)] = df['K-'+str(N)].rolling(M).mean()
+    return df['K-'+str(N)], df['D-'+str(N)]
 
 
 def computeMaximo(data):
