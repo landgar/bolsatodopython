@@ -1288,7 +1288,9 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 10
+    periodo = 2
+
+    print("periodo = "+str(periodo))
 
     # Se añade el incremento en porcentaje
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
@@ -1464,8 +1466,8 @@ def anadirSMARelativa(dataframe):
 
 def anadirHammerRangosRelativa(dataframe):
     df = dataframe
-    diasPreviosA = [1, 2, 3, 10, 20]
-    diasPreviosB = [1, 2, 3, 10, 20]
+    diasPreviosA = [1, 2, 3, 10, 15, 20]
+    diasPreviosB = [1, 2, 3, 10, 15, 20]
     parametroA = ['high', 'low', 'volume']
     parametroB = ['high', 'low', 'volume']
     parametroC = ['high', 'low', 'volume']
@@ -1572,8 +1574,8 @@ def anadirsupernovaTipoB(dataframe):
     df = dataframe
 
     # Periodos
-    periodoA = [5, 10, 20]
-    periodoB = [5, 10, 20]
+    periodoA = [1, 2, 3, 4, 5, 10, 20]
+    periodoB = [1, 2, 3, 4, 5, 10, 20]
 
     for periodoA_i in periodoA:
         for periodoB_i in periodoB:
@@ -1603,8 +1605,8 @@ def anadirsupernovaTipoC(dataframe):
     df = dataframe
 
     # Periodos
-    periodoA = [3, 5, 8, 15]
-    periodoB = [3, 5, 8, 15]
+    periodoA = [1, 2, 3, 4, 5, 8, 15]
+    periodoB = [1, 2, 3, 4, 5, 8, 15]
 
     for periodoA_i in periodoA:
         for periodoB_i in periodoB:
