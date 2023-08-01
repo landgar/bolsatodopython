@@ -36,15 +36,15 @@ from sklearn.model_selection import train_test_split
 
 # Para creación de modelo y predicción
 carpeta = "/home/t151521/Descargas/prueba/"
-descargarInternetParaGenerarModelo = True
+descargarInternetParaGenerarModelo = False
 
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 10
+cuantasEmpresas = 50
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 10
+PREDICCIONcuantasEmpresas = 50
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Para creación de modelo
@@ -1288,7 +1288,7 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 5
+    periodo = 10
 
     # Se añade el incremento en porcentaje
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
@@ -1367,7 +1367,7 @@ def anadirParametrosAvanzados(dataframe):
 
 def anadirRSI(dataframe):
     df = dataframe
-    periodos = [5, 10, 15, 25, 50]  # SIEMPRE MAYOR O IGUAL QUE 3
+    periodos = [15, 25, 50]  # SIEMPRE MAYOR O IGUAL QUE 3
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1380,7 +1380,7 @@ def anadirRSI(dataframe):
 
 def anadirMACD(dataframe):
     df = dataframe
-    periodos = [5, 10, 15, 25, 50]
+    periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1393,7 +1393,7 @@ def anadirMACD(dataframe):
 
 def anadirMACDsigydif(dataframe):
     df = dataframe
-    periodos = [5, 10, 15, 25, 50]
+    periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     lag = [0, 1, 2, 3]
     for periodo_i in periodos:
@@ -1411,7 +1411,7 @@ def anadirMACDsigydif(dataframe):
 
 def anadirMACDhist(dataframe):
     df = dataframe
-    periodos = [5, 10, 15, 25, 50]
+    periodos = [15, 25, 50]
     parametro = ['adjclose', 'volume']
     for periodo_i in periodos:
         for parametro_i in parametro:
@@ -1464,11 +1464,8 @@ def anadirSMARelativa(dataframe):
 
 def anadirHammerRangosRelativa(dataframe):
     df = dataframe
-    # Se generan varias features, iterando con varias combinaciones de parámetros hammer
-    # [1, 2, 3, 4, 10]
-    # ['adjclose', 'volume', 'close', 'high', 'low', 'open']
-    diasPreviosA = [1, 2, 3, 4, 5, 10, 15]
-    diasPreviosB = [1, 2, 3, 4, 5, 10, 15]
+    diasPreviosA = [1, 2, 3, 10, 20]
+    diasPreviosB = [1, 2, 3, 10, 20]
     parametroA = ['high', 'low', 'volume']
     parametroB = ['high', 'low', 'volume']
     parametroC = ['high', 'low', 'volume']
@@ -1502,8 +1499,8 @@ def anadirvwapRelativa(dataframe):
 
 def anadirDistanciaAbollingerRelativa(dataframe):
     df = dataframe
-    parametroA = [5, 10, 20, 30]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
-    parametroB = [5, 10, 20, 30]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroA = [5, 10, 30]  # datapoint rolling window. DEBE SER MAYOR QUE 1 SIEMPRE
+    parametroB = [5, 10, 30]  # sigma width. DEBE SER MAYOR QUE 1 SIEMPRE
     parametroC = ['adjclose', 'volume']
     for parametroA_i in parametroA:
         for parametroB_i in parametroB:
@@ -1575,8 +1572,8 @@ def anadirsupernovaTipoB(dataframe):
     df = dataframe
 
     # Periodos
-    periodoA = [3, 5, 10, 15, 30]
-    periodoB = [5, 10, 15, 20, 30]
+    periodoA = [5, 10, 20]
+    periodoB = [5, 10, 20]
 
     for periodoA_i in periodoA:
         for periodoB_i in periodoB:
@@ -1606,8 +1603,8 @@ def anadirsupernovaTipoC(dataframe):
     df = dataframe
 
     # Periodos
-    periodoA = [3, 4, 5, 7, 10, 15]
-    periodoB = [10, 15, 20, 30]
+    periodoA = [3, 5, 8, 15]
+    periodoB = [3, 5, 8, 15]
 
     for periodoA_i in periodoA:
         for periodoB_i in periodoB:
@@ -1663,7 +1660,7 @@ def anadirsupernovaTipoD(dataframe):
     df = dataframe
 
     # Periodos
-    periodo = [5, 10, 15, 20, 30]
+    periodo = [5, 15, 30]
 
     for periodo_i in periodo:
         # high relativa en x días
@@ -1704,20 +1701,17 @@ def anadirsupernovaTipoE(dataframe):
     df['fuerzarelativaE-lag0-clip'] = df['fuerzarelativaE-lag0'].clip(lower=0)
     df['fuerzarelativaE-lag1-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 1).clip(lower=0)
     df['fuerzarelativaE-lag2-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 2).clip(lower=0)
-    df['fuerzarelativaE-lag3-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 3).clip(lower=0)
-    df['fuerzarelativaE-lag4-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 4).clip(lower=0)
     df['fuerzarelativaE-lag5-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 5).clip(lower=0)
+    df['fuerzarelativaE-lag10-clip'] = computeDerivadaDesfase(df['fuerzarelativaE-lag0'], 10).clip(lower=0)
 
     df['fuerzarelativaElower0-1'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
         'fuerzarelativaE-lag1-clip']
     df['fuerzarelativaElower0-2'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
         'fuerzarelativaE-lag2-clip']
-    df['fuerzarelativaElower0-3'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
-        'fuerzarelativaE-lag3-clip']
-    df['fuerzarelativaElower0-4'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
-        'fuerzarelativaE-lag4-clip']
     df['fuerzarelativaElower0-5'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
         'fuerzarelativaE-lag5-clip']
+    df['fuerzarelativaElower0-10'] = df['fuerzarelativaE-lag0-clip'] * df['fuerzarelativaE-lag0-clip'] * df[
+        'fuerzarelativaE-lag10-clip']
 
     return df
 
@@ -1745,27 +1739,24 @@ def anadirsupernovaTipoF(dataframe):
     df['fuerzarelativaF-lag0-clip'] = -(-df['fuerzarelativaF-lag0']).clip(lower=0)
     df['fuerzarelativaF-lag1-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 1)).clip(lower=0)
     df['fuerzarelativaF-lag2-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 2)).clip(lower=0)
-    df['fuerzarelativaF-lag3-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 3)).clip(lower=0)
-    df['fuerzarelativaF-lag4-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 4)).clip(lower=0)
     df['fuerzarelativaF-lag5-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 5)).clip(lower=0)
+    df['fuerzarelativaF-lag10-clip'] = -(-computeDerivadaDesfase(df['fuerzarelativaF-lag0'], 10)).clip(lower=0)
 
     df['fuerzarelativaFlower0-1'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
         'fuerzarelativaF-lag1-clip']
     df['fuerzarelativaFlower0-2'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
         'fuerzarelativaF-lag2-clip']
-    df['fuerzarelativaFlower0-3'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
-        'fuerzarelativaF-lag3-clip']
-    df['fuerzarelativaFlower0-4'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
-        'fuerzarelativaF-lag4-clip']
     df['fuerzarelativaFlower0-5'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
         'fuerzarelativaF-lag5-clip']
+    df['fuerzarelativaFlower0-10'] = df['fuerzarelativaF-lag0-clip'] * df['fuerzarelativaF-lag0-clip'] * df[
+        'fuerzarelativaF-lag10-clip']
 
     return df
 
 
 def anadiraaron(dataframe):
     df = dataframe
-    periodo = [10, 15, 25, 40, 50]
+    periodo = [5, 10, 15, 25, 50]
     for periodo_i in periodo:
         nombreFeatureUp = "aaron-up-" + str(periodo_i)
         nombreFeatureDown = "aaron-down-" + str(periodo_i)
@@ -1785,7 +1776,7 @@ def anadiradl(dataframe):
 
 def anadirstochastic_oscillator(dataframe):
     df = dataframe
-    periodo = [5, 10, 15, 20]
+    periodo = [5, 10, 15]
     for periodo_i in periodo:
         nombreFeaturek = "stochastic-k-" + str(periodo_i)
         nombreFeatured = "stochastic-d-" + str(periodo_i)
