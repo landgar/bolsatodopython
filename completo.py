@@ -1288,15 +1288,15 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 2
+    periodo = 30
 
-    print("periodo = "+str(periodo))
+    print("periodo = " + str(periodo))
 
     # Se añade el incremento en porcentaje
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=20, periodo=periodo)
 
     return datos
 
@@ -1696,7 +1696,6 @@ def anadirsupernovaTipoE(dataframe):
     mediaVela = computeMedian(df['velaE'].abs())
     df['velarelativaE'] = df['velaE'] / mediaVela
 
-
     df['fuerzarelativaE-lag0'] = df['velarelativaE'] * df['volume'] / mediaVolumen
 
     # Velas días x
@@ -1855,6 +1854,11 @@ def computeMACDhist(data, n_fast, n_slow, n_smooth):
 # Calculadora de rentabilidad mediana leyendo el parámetro INCREMENTO
 def computeRentabilidadMediaFromIncremento(data):
     return data['INCREMENTO'].median()
+
+
+# Calculadora de desviación típica leyendo el parámetro INCREMENTO
+def computeDesviacionTipicaFromIncremento(data):
+    return data['INCREMENTO'].std()
 
 
 def computelag(data, lag):
@@ -2018,12 +2022,12 @@ def computearoon(data, period=14):
 
 def computestochastic_oscillator(data, N=14, M=3):
     df = data
-    df['low-'+str(N)] = df['low'].rolling(N).min()
-    df['high-'+str(N)] = df['high'].rolling(N).max()
-    df['K-'+str(N)] = 100 * (df['adjclose'] - df['low-'+str(N)]) / \
-              (df['high-'+str(N)] - df['low-'+str(N)])
-    df['D-'+str(N)] = df['K-'+str(N)].rolling(M).mean()
-    return df['K-'+str(N)], df['D-'+str(N)]
+    df['low-' + str(N)] = df['low'].rolling(N).min()
+    df['high-' + str(N)] = df['high'].rolling(N).max()
+    df['K-' + str(N)] = 100 * (df['adjclose'] - df['low-' + str(N)]) / \
+                        (df['high-' + str(N)] - df['low-' + str(N)])
+    df['D-' + str(N)] = df['K-' + str(N)].rolling(M).mean()
+    return df['K-' + str(N)], df['D-' + str(N)]
 
 
 def computeMaximo(data):
@@ -2352,10 +2356,13 @@ def predecir(pathModelo, umbralProba=0.5, necesitaDescarga=True):
     datosValidacion_a_invertir_valid = datosValidacion_a_invertir_valid[
         datosValidacion_a_invertir_valid.index.isin(y_pred_a_invertir_valid.index)]
     rentaMedia_valid = computeRentabilidadMediaFromIncremento(datosValidacion_a_invertir_valid)
+    std_valid = computeDesviacionTipicaFromIncremento(datosValidacion_a_invertir_valid)
     print("...")
     print("umbral de probabilidad para escoger el target: ", umbralProba)
     print("RENTA MEDIANA de antigüedades cercanas (ligeramente antiguas) similares a donde invertir: ",
           rentaMedia_valid)
+    print("DESVIACION TIPICA de antigüedades cercanas (ligeramente antiguas) similares a donde invertir: ",
+          std_valid)
 
     return pathDondeInvertir
 
@@ -2417,4 +2424,3 @@ with warnings.catch_warnings():
 
 print("...")
 print("FIN")
-
