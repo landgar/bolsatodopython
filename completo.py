@@ -1288,7 +1288,7 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 30
+    periodo = 5
 
     print("periodo = " + str(periodo))
 
@@ -1296,7 +1296,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=20, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=5, periodo=periodo)
 
     return datos
 
@@ -1363,6 +1363,7 @@ def anadirParametrosAvanzados(dataframe):
     df = anadiradl(df)
     df = anadirstochastic_oscillator(df)
     df = anadirVolumenRelativo(df)
+    df = anadirFeaturesJapanCompetition1(df)
 
     return df
 
@@ -1544,7 +1545,7 @@ def anadirsupernovaTipoA(dataframe):
     df = dataframe
 
     # Periodos
-    periodo = [2, 3, 5, 10, 20]
+    periodo = [1, 2, 3, 5, 10, 20]
 
     # salto high (variación en 1 día)
     highDesplazado1 = computeDerivadaDesfase(df['high'], 1)
@@ -1662,7 +1663,7 @@ def anadirsupernovaTipoD(dataframe):
     df = dataframe
 
     # Periodos
-    periodo = [5, 15, 30]
+    periodo = [2, 5, 15, 30]
 
     for periodo_i in periodo:
         # high relativa en x días
@@ -1795,6 +1796,21 @@ def anadirVolumenRelativo(dataframe):
     mediaVolumen = computeMedian(df['volume'])
     nombreFeature = "volumenrelativo"
     df[nombreFeature] = df['volume'] / mediaVolumen
+    return df
+
+
+def anadirFeaturesJapanCompetition1(dataframe):
+    # https://www.kaggle.com/code/uioiuioi/2nd-place-solution
+    df = dataframe
+    periodo = [5, 10, 20, 40, 60]
+    for periodo_i in periodo:
+        nombreFeature = "return-" + str(periodo_i)
+        df[nombreFeature] = df['adjclose'].pct_change(periodo_i)
+        nombreFeature = "volatility-" + str(periodo_i)
+        df[nombreFeature] = (np.log(df['adjclose']).diff().rolling(periodo_i).std())
+        nombreFeature = "MA-gap-" + str(periodo_i)
+        df[nombreFeature] = df['adjclose'] / (df['adjclose'].rolling(periodo_i).mean())
+
     return df
 
 
