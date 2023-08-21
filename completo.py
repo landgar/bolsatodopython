@@ -1802,15 +1802,41 @@ def anadirVolumenRelativo(dataframe):
 def anadirFeaturesJapanCompetition1(dataframe):
     # https://www.kaggle.com/code/uioiuioi/2nd-place-solution
     df = dataframe
-    periodo = [5, 10, 20, 40, 60]
-    for periodo_i in periodo:
-        nombreFeature = "return-" + str(periodo_i)
-        df[nombreFeature] = df['adjclose'].pct_change(periodo_i)
-        nombreFeature = "volatility-" + str(periodo_i)
-        df[nombreFeature] = (np.log(df['adjclose']).diff().rolling(periodo_i).std())
-        nombreFeature = "MA-gap-" + str(periodo_i)
-        df[nombreFeature] = df['adjclose'] / (df['adjclose'].rolling(periodo_i).mean())
-
+    df["return5"] = df['adjclose'].pct_change(5)
+    df["return10"] = df['adjclose'].pct_change(10)
+    df["return20"] = df['adjclose'].pct_change(20)
+    df["return40"] = df['adjclose'].pct_change(40)
+    df["return60"] = df['adjclose'].pct_change(60)
+    df["volatility5"] = (
+        np.log(df['adjclose']).diff().rolling(5).std()
+    )
+    df["volatility10"] = (
+        np.log(df['adjclose']).diff().rolling(10).std()
+    )
+    df["volatility20"] = (
+        np.log(df['adjclose']).diff().rolling(20).std()
+    )
+    df["volatility40"] = (
+        np.log(df['adjclose']).diff().rolling(40).std()
+    )
+    df["volatility60"] = (
+        np.log(df['adjclose']).diff().rolling(60).std()
+    )
+    df["MA_gap5"] = df['adjclose'] / (
+        df['adjclose'].rolling(5).mean()
+    )
+    df["MA_gap10"] = df['adjclose'] / (
+        df['adjclose'].rolling(10).mean()
+    )
+    df["MA_gap20"] = df['adjclose'] / (
+        df['adjclose'].rolling(20).mean()
+    )
+    df["MA_gap_40"] = df['adjclose'] / (
+        df['adjclose'].rolling(40).mean()
+    )
+    df["MA_gap_60"] = df['adjclose'] / (
+        df['adjclose'].rolling(60).mean()
+    )
     return df
 
 
