@@ -2219,9 +2219,10 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
 
         best_featuresCompletas = feature_importance.loc[feature_importance.feature.isin(colsCompletas)]
         features_ordenadasCompletas = best_featuresCompletas.sort_values(by="importance", ascending=False)
-        with open(carpeta + "features_ordenadasCompletas.txt", 'a') as f:
+        with open(carpeta + "features_ordenadasCompletas.txt", 'w') as f:
             df_string = features_ordenadasCompletas.to_string()
             f.write(df_string)
+            f.close()
 
         plt.figure(figsize=(16, 12));
         sns.barplot(x="importance", y="feature", data=features_ordenadas);
@@ -2433,9 +2434,19 @@ def predecir(pathModelo, umbralProba=0.5, necesitaDescarga=True):
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
     datosValidacion_a_invertir_valid = datosValidacion_a_invertir_valid[
         datosValidacion_a_invertir_valid.index.isin(y_pred_a_invertir_valid.index)]
+
+    # Se guardan las rentas en un fichero
+    pathRentasDondeInvertir = carpeta + "rentasDondeInvertir-umbral-" + str(umbralProba) + ".txt"
+    with open(pathRentasDondeInvertir, 'w') as f:
+        incrementos=datosValidacion_a_invertir_valid['INCREMENTO']
+        df_string = incrementos.to_string()
+        f.write(df_string)
+        f.close()
+
     rentaMedia_valid = computeRentabilidadMediaFromIncremento(datosValidacion_a_invertir_valid)
     std_valid = computeDesviacionTipicaFromIncremento(datosValidacion_a_invertir_valid)
     print("...")
+
     print("umbral de probabilidad para escoger el target: ", umbralProba)
     print("RENTA MEDIANA de antigüedades cercanas (ligeramente antiguas) similares a donde invertir: ",
           rentaMedia_valid)
