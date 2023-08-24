@@ -1364,6 +1364,7 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirstochastic_oscillator(df)
     df = anadirVolumenRelativo(df)
     df = anadirFeaturesJapanCompetition1(df)
+    df = anadirGapAcumulado(df)
 
     return df
 
@@ -1800,7 +1801,7 @@ def anadirVolumenRelativo(dataframe):
 
 
 def anadirFeaturesJapanCompetition1(dataframe):
-    #https://www.kaggle.com/code/uioiuioi/2nd-place-solution
+    # https://www.kaggle.com/code/uioiuioi/2nd-place-solution
     df = dataframe
     df["return5"] = df['adjclose'].pct_change(5)
     df["return10"] = df['adjclose'].pct_change(10)
@@ -1817,6 +1818,19 @@ def anadirFeaturesJapanCompetition1(dataframe):
     df["MA_gap20"] = df['adjclose'] / (df['adjclose'].rolling(20).mean())
     df["MA_gap_40"] = df['adjclose'] / (df['adjclose'].rolling(40).mean())
     df["MA_gap_60"] = df['adjclose'] / (df['adjclose'].rolling(60).mean())
+    return df
+
+
+def anadirGapAcumulado(dataframe):
+    df = dataframe
+    periodoA = [0, 1, 2]
+    periodoB = [2, 3, 4]
+    for periodoA_i in periodoA:
+        for periodoB_i in periodoB:
+            nombreFeature = "gapacum-" + str(periodoA_i) + "-" + str(periodoB_i)
+            df[nombreFeature] = calculadoraGap(df, diasPreviosA=periodoA_i, diasPreviosB=periodoB_i, parametroA1="open",
+                                               parametroA2="adjclose",
+                                               parametroB1="open", parametroB2="adjclose")
     return df
 
 
@@ -2109,6 +2123,27 @@ def computeadl(data: pd.DataFrame, high_col: str, low_col: str, close_col: str, 
     return adl
 
 
+# Calcula el Gap acumulado multiplicado (diferencia entre la apertura "open" del día n y el cierre "adjclose" del día n-1) sucedido en los días previos A y B.
+def calculadoraGap(data, diasPreviosA=1, diasPreviosB=2, parametroA1="open", parametroA2="adjclose",
+                   parametroB1="open", parametroB2="adjclose"):
+    # Se toman los parámetros
+    a1 = data[parametroA1]
+    a2 = data[parametroA2]
+    b1 = data[parametroB1]
+    b2 = data[parametroB2]
+
+    a1Desplazado = a1.shift(diasPreviosA)
+    a2Desplazado = a2.shift(diasPreviosA - 1)
+    b1Desplazado = b1.shift(diasPreviosB)
+    b2Desplazado = b2.shift(diasPreviosB - 1)
+
+    gapA = a1Desplazado - a2Desplazado
+    gapB = b1Desplazado - b2Desplazado
+
+    gapAcumulado = gapA * gapB
+    return gapAcumulado
+
+
 def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibujoFeatures="", carpeta=""):
     # Aleatorización de datos
     df = aleatorizarDatos(datos)
@@ -2167,6 +2202,16 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
         features_ordenadas = best_features.sort_values(by="importance", ascending=False)
         print("Features por importancia:")
         print(features_ordenadas)
+        # export DataFrame to text file (keep header row and index column)
+        colsCompletas = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(by="importance",
+                                                                                                   ascending=False).index
+
+        best_featuresCompletas = feature_importance.loc[feature_importance.feature.isin(colsCompletas)]
+        features_ordenadasCompletas = best_featuresCompletas.sort_values(by="importance", ascending=False)
+        with open(carpeta+"features_ordenadasCompletas.txt", 'a') as f:
+            df_string = features_ordenadasCompletas.to_string()
+            f.write(df_string)
+
         plt.figure(figsize=(16, 12));
         sns.barplot(x="importance", y="feature", data=features_ordenadas);
         plt.title('Importance of Feature');
