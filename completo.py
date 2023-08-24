@@ -1288,7 +1288,7 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 5
+    periodo = 2
 
     print("periodo = " + str(periodo))
 
@@ -2140,7 +2140,7 @@ def calculadoraGap(data, diasPreviosA=1, diasPreviosB=2, parametroA1="open", par
     gapA = a1Desplazado - a2Desplazado
     gapB = b1Desplazado - b2Desplazado
 
-    gapAcumulado = gapA * gapB
+    gapAcumulado = gapA + gapB
     return gapAcumulado
 
 
