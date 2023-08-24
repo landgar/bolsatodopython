@@ -1288,7 +1288,7 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 2
+    periodo = 1
 
     print("periodo = " + str(periodo))
 
@@ -1823,14 +1823,24 @@ def anadirFeaturesJapanCompetition1(dataframe):
 
 def anadirGapAcumulado(dataframe):
     df = dataframe
-    periodoA = [0, 1, 2]
-    periodoB = [2, 3, 4]
+    periodoA = [0, 1, 2, 3, 4]
+    periodoB = [0, 1, 2, 3, 4]
+    parametroA1 = ['open', 'high', 'adjclose']
+    parametroA2 = ['open', 'high', 'adjclose']
+    parametroB1 = ['open', 'high', 'adjclose']
+    parametroB2 = ['open', 'high', 'adjclose']
     for periodoA_i in periodoA:
         for periodoB_i in periodoB:
-            nombreFeature = "gapacum-" + str(periodoA_i) + "-" + str(periodoB_i)
-            df[nombreFeature] = calculadoraGap(df, diasPreviosA=periodoA_i, diasPreviosB=periodoB_i, parametroA1="open",
-                                               parametroA2="adjclose",
-                                               parametroB1="open", parametroB2="adjclose")
+            for parametroA1_i in parametroA1:
+                for parametroA2_i in parametroA2:
+                    for parametroB1_i in parametroB1:
+                        for parametroB2_i in parametroB2:
+                            nombreFeature = "gapacum-" + str(periodoA_i) + "-" + str(
+                                periodoB_i) + "-" + parametroA1_i + "-" + parametroA2_i + "-" + parametroB1_i + "-" + parametroB2_i
+                            df[nombreFeature] = calculadoraGap(df, diasPreviosA=periodoA_i, diasPreviosB=periodoB_i,
+                                                               parametroA1=parametroA1_i,
+                                                               parametroA2=parametroA2_i,
+                                                               parametroB1=parametroB1_i, parametroB2=parametroB2_i)
     return df
 
 
@@ -2203,12 +2213,13 @@ def generaModeloLightGBM(datos, metrica, pintarFeatures=False, pathCompletoDibuj
         print("Features por importancia:")
         print(features_ordenadas)
         # export DataFrame to text file (keep header row and index column)
-        colsCompletas = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(by="importance",
-                                                                                                   ascending=False).index
+        colsCompletas = feature_importance[["feature", "importance"]].groupby("feature").mean().sort_values(
+            by="importance",
+            ascending=False).index
 
         best_featuresCompletas = feature_importance.loc[feature_importance.feature.isin(colsCompletas)]
         features_ordenadasCompletas = best_featuresCompletas.sort_values(by="importance", ascending=False)
-        with open(carpeta+"features_ordenadasCompletas.txt", 'a') as f:
+        with open(carpeta + "features_ordenadasCompletas.txt", 'a') as f:
             df_string = features_ordenadasCompletas.to_string()
             f.write(df_string)
 
