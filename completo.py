@@ -217,7 +217,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
         ultimaFecha = datosUltimoMinuto['Datetime'].iloc[0]
         ultimaFechaTrozo = ultimaFecha.strftime("%Y-%m-%d")  # Formato 2023-08-14
 
-        DEPURAR = 1
+        DEPURAR = 0
         if DEPURAR == 1 or ultimaFechaTrozo == hoy:
             # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
             print(
