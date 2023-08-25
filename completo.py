@@ -44,10 +44,10 @@ descargarInternetParaGenerarModelo = True
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 10
+cuantasEmpresas = 5
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 10
+PREDICCIONcuantasEmpresas = 5
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Poner a True si se quiere entrenar y predecir. A False si sólo predecir
@@ -217,7 +217,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
         ultimaFecha = datosUltimoMinuto['Datetime'].iloc[0]
         ultimaFechaTrozo = ultimaFecha.strftime("%Y-%m-%d")  # Formato 2023-08-14
 
-        DEPURAR = 0
+        DEPURAR = 1
         if DEPURAR == 1 or ultimaFechaTrozo == hoy:
             # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
             print(
@@ -238,19 +238,19 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             horaActual = int(datetime.now().hour)
 
             factorMultiplicador = 1
-            if horaActual == 1:
+            if horaActual == 15:
                 factorMultiplicador = 8
-            elif horaActual == 2:
+            elif horaActual == 16:
                 factorMultiplicador = 4
-            elif horaActual == 3:
+            elif horaActual == 17:
                 factorMultiplicador = 2.6
-            elif horaActual == 4:
+            elif horaActual == 18:
                 factorMultiplicador = 2
-            elif horaActual == 5:
+            elif horaActual == 19:
                 factorMultiplicador = 1.8
-            elif horaActual == 6:
+            elif horaActual == 20:
                 factorMultiplicador = 1.3
-            elif horaActual == 7:
+            elif horaActual == 21:
                 factorMultiplicador = 1.14
             else:
                 factorMultiplicador = 1
