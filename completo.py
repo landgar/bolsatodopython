@@ -44,10 +44,10 @@ descargarInternetParaGenerarModelo = True
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 5
+cuantasEmpresas = 10
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 5
+PREDICCIONcuantasEmpresas = 10
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Poner a True si se quiere entrenar y predecir. A False si sólo predecir
@@ -187,11 +187,20 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             frame.rename(columns={"index": "date"}, inplace=True)
 
     #############################
-    # Lo siguiente es sólo en el caso de predecir, no de generar modelo. Es decir, si la fecha final es muy cercana
+    # Lo siguiente es sólo en el caso de predecir, no de generar modelo. Es decir, si la fecha final es muy cercana.
+    # Además, cuando se entrena se pasa un string. Cuando se predice, un date
     import time
-    hoy = time.strftime("%d/%m/%Y")  # Formato 2023-08-14
+    hoy = time.strftime("%Y-%m-%d")  # Formato 2023-08-14
+    if isinstance(end_date, str):
+        endDateString=end_date
+    else:
+        endDateString=end_date.strftime("%Y-%m-%d")
 
-    if hoy == end_date:
+    print("hoy: ", hoy)
+    print("end_date: ", endDateString)
+
+    if hoy == endDateString:
+        print("INVENTAMOS EL DÍA DE HOY...")
         ############# INVENTAMOS EL DÍA DE HOY SI ES INCOMPLETO (MERCADO ABIERTO), ya que Yahoo Finance no nos lo dará ################
         # Cuando la fecha de fin coincide con la fecha de hoy, debemos construir el close con el
         # precio actual (minuto más reciente) y lo añadiremos al final del conjunto de datos
@@ -225,7 +234,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             if DEPURAR == 1 or ultimaFechaTrozo == hoy:
                 # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
                 print(
-                    "ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h, ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
+                    "ATENCIÓN: EL MERCADO ESTÁ ABIERTO, o se ha cerrado y no son todavía las 23:59h, ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
 
                 # Para obtener el Open del día, se toma el Open del primer minuto
                 openPrimerMinuto = datosPorMinuto['Open'].iloc[0]
@@ -261,6 +270,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
 
                 filasRecibidas = len(datosPorMinuto.index)
                 print("filasRecibidas al detalle de minuto: ", filasRecibidas)
+                print("factorMultiplicador: ", factorMultiplicador)
                 volumenAcumulado = datosPorMinuto["Volume"].sum() * factorMultiplicador
 
                 # Para obtener el close y el adjclose, se toma el Close del último minuto hasta ahora
@@ -277,6 +287,9 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
                                              'volume': volumenAcumulado,
                                              'ticker': ticker.upper()}
                 frame = frame.append(filaParaHoyMercadoAbierto, ignore_index=True)
+
+                print("la fila inventada para hoy es: ")
+                print(filaParaHoyMercadoAbierto)
 
             else:
                 print(
