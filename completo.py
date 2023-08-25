@@ -39,15 +39,15 @@ from sklearn.model_selection import train_test_split
 
 # Para creación de modelo y predicción
 carpeta = "/home/t151521/Descargas/prueba/"
-descargarInternetParaGenerarModelo = False
+descargarInternetParaGenerarModelo = True
 
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 50
+cuantasEmpresas = 5
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 50
+PREDICCIONcuantasEmpresas = 5
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Para creación de modelo
@@ -232,6 +232,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             # Se toma el volumen acumulado en ese día, ampliado para lo estimado restante del día. Un día completo
             # tiene 84 filas
             filasRecibidas=len(datosPorMinuto.index)
+            print("filasRecibidas al detalle de minuto: ", filasRecibidas)
             volumenAcumulado=0
             if filasRecibidas>0:
                 volumenAcumulado = datosPorMinuto["Volume"].sum()*(84/filasRecibidas)
