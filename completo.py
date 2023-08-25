@@ -186,99 +186,103 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             frame = frame.reset_index()
             frame.rename(columns={"index": "date"}, inplace=True)
 
-    ############# INVENTAMOS EL DÍA DE HOY SI ES INCOMPLETO (MERCADO ABIERTO), ya que Yahoo Finance no nos lo dará ################
-    # Cuando la fecha de fin coincide con la fecha de hoy, debemos construir el close con el
-    # precio actual (minuto más reciente) y lo añadiremos al final del conjunto de datos
-    # Import package
-    import yfinance as yf
+    #############################
+    # Lo siguiente es sólo en el caso de predecir, no de generar modelo. Es decir, si la fecha final es muy cercana
+    import time
+    hoy = time.strftime("%d/%m/%Y")  # Formato 2023-08-14
 
-    # Datos por minuto para el último día
-    datosPorMinuto = yf.download(tickers=ticker, period="1d", interval="1m")
+    if hoy == end_date:
+        ############# INVENTAMOS EL DÍA DE HOY SI ES INCOMPLETO (MERCADO ABIERTO), ya que Yahoo Finance no nos lo dará ################
+        # Cuando la fecha de fin coincide con la fecha de hoy, debemos construir el close con el
+        # precio actual (minuto más reciente) y lo añadiremos al final del conjunto de datos
+        # Import package
+        import yfinance as yf
 
-    if datosPorMinuto.empty:
-        # DEBUG:
-        print("De la empresa \"", ticker, "\" no se han podido obtener datos")
+        # Datos por minuto para el último día
+        datosPorMinuto = yf.download(tickers=ticker, period="1d", interval="1m")
 
-    else:
-
-        # Se toma el último minuto de hoy (sólo saldrá durante el mercado abierto. Si no, sale lo de ayer)
-        # Por tanto, se recomienda ejecutar el programa sólo en mercado abierto, casi al cierre (para que el valor
-        # de close que vamos a estimar sea similar al precio de este último minuto)
-        datosUltimoMinuto = datosPorMinuto.tail(1)
-
-        # El índice es la fecha, así que se reconvierte como date en una columna más
-        datosUltimoMinuto = datosUltimoMinuto.reset_index()
-        datosUltimoMinuto.rename(columns={"index": "date"}, inplace=True)
-
-        # Sólo se añadirá tras la apertura del mercado. Si no, no aparecen datos de hoy. Esta condición se validará comprobando si los últimos datos que tenemos tienen la misma fecha que hoy
-        import time
-        hoy = time.strftime("%Y-%m-%d")  # Formato 2023-08-14
-
-        ultimaFecha = datosUltimoMinuto['Datetime'].iloc[0]
-        ultimaFechaTrozo = ultimaFecha.strftime("%Y-%m-%d")  # Formato 2023-08-14
-
-        DEPURAR = 0
-        if DEPURAR == 1 or ultimaFechaTrozo == hoy:
-            # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
-            print(
-                "ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h, ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
-
-            # Para obtener el Open del día, se toma el Open del primer minuto
-            openPrimerMinuto = datosPorMinuto['Open'].iloc[0]
-
-            # Para obtener el high del día, se toma el mayor valor hasta ahora
-            highMayorDelDia = datosPorMinuto['High'].max()
-
-            # Para obtener el low del día, se toma el menor valor hasta ahora
-            lowMenorDelDia = datosPorMinuto['Low'].min()
-
-            # Se toma el volumen acumulado en ese día. Se estimará el volumen completo del día en función de la hora del último minuto
-            from datetime import datetime
-            # initialize the local time
-            horaActual = int(datetime.now().hour)
-
-            factorMultiplicador = 1
-            if horaActual == 15:
-                factorMultiplicador = 8
-            elif horaActual == 16:
-                factorMultiplicador = 4
-            elif horaActual == 17:
-                factorMultiplicador = 2.6
-            elif horaActual == 18:
-                factorMultiplicador = 2
-            elif horaActual == 19:
-                factorMultiplicador = 1.8
-            elif horaActual == 20:
-                factorMultiplicador = 1.3
-            elif horaActual == 21:
-                factorMultiplicador = 1.14
-            else:
-                factorMultiplicador = 1
-
-            filasRecibidas = len(datosPorMinuto.index)
-            print("filasRecibidas al detalle de minuto: ", filasRecibidas)
-            volumenAcumulado = datosPorMinuto["Volume"].sum() * factorMultiplicador
-
-            # Para obtener el close y el adjclose, se toma el Close del último minuto hasta ahora
-            closeDelDia = datosUltimoMinuto['Close'].iloc[0]
-            adjCloseDelDia = datosUltimoMinuto['Close'].iloc[0]
-
-            # Se añade la fila creada para hoy, aunque el mercado siga abierto
-            filaParaHoyMercadoAbierto = {'date': ultimaFecha.strftime("%Y-%m-%d 00:00:00"),
-                                         'open': openPrimerMinuto,
-                                         'high': highMayorDelDia,
-                                         'low': lowMenorDelDia,
-                                         'close': closeDelDia,
-                                         'adjclose': adjCloseDelDia,
-                                         'volume': volumenAcumulado,
-                                         'ticker': ticker.upper()}
-            frame = frame.append(filaParaHoyMercadoAbierto, ignore_index=True)
+        if datosPorMinuto.empty:
+            # DEBUG:
+            print("De la empresa \"", ticker, "\" no se han podido obtener datos")
 
         else:
-            print(
-                "ATENCIÓN: EL MERCADO TODAVÍA NO ESTÁ ABIERTO. Sólo se podrán tomar datos de ayer o antes. NO se recomienda la inversión!!!!!")
 
-        #############################
+            # Se toma el último minuto de hoy (sólo saldrá durante el mercado abierto. Si no, sale lo de ayer)
+            # Por tanto, se recomienda ejecutar el programa sólo en mercado abierto, casi al cierre (para que el valor
+            # de close que vamos a estimar sea similar al precio de este último minuto)
+            datosUltimoMinuto = datosPorMinuto.tail(1)
+
+            # El índice es la fecha, así que se reconvierte como date en una columna más
+            datosUltimoMinuto = datosUltimoMinuto.reset_index()
+            datosUltimoMinuto.rename(columns={"index": "date"}, inplace=True)
+
+            # Sólo se añadirá tras la apertura del mercado. Si no, no aparecen datos de hoy. Esta condición se validará comprobando si los últimos datos que tenemos tienen la misma fecha que hoy
+
+            ultimaFecha = datosUltimoMinuto['Datetime'].iloc[0]
+            ultimaFechaTrozo = ultimaFecha.strftime("%Y-%m-%d")  # Formato 2023-08-14
+
+            DEPURAR = 0
+            if DEPURAR == 1 or ultimaFechaTrozo == hoy:
+                # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
+                print(
+                    "ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h, ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
+
+                # Para obtener el Open del día, se toma el Open del primer minuto
+                openPrimerMinuto = datosPorMinuto['Open'].iloc[0]
+
+                # Para obtener el high del día, se toma el mayor valor hasta ahora
+                highMayorDelDia = datosPorMinuto['High'].max()
+
+                # Para obtener el low del día, se toma el menor valor hasta ahora
+                lowMenorDelDia = datosPorMinuto['Low'].min()
+
+                # Se toma el volumen acumulado en ese día. Se estimará el volumen completo del día en función de la hora del último minuto
+                from datetime import datetime
+                # initialize the local time
+                horaActual = int(datetime.now().hour)
+
+                factorMultiplicador = 1
+                if horaActual == 15:
+                    factorMultiplicador = 8
+                elif horaActual == 16:
+                    factorMultiplicador = 4
+                elif horaActual == 17:
+                    factorMultiplicador = 2.6
+                elif horaActual == 18:
+                    factorMultiplicador = 2
+                elif horaActual == 19:
+                    factorMultiplicador = 1.8
+                elif horaActual == 20:
+                    factorMultiplicador = 1.3
+                elif horaActual == 21:
+                    factorMultiplicador = 1.14
+                else:
+                    factorMultiplicador = 1
+
+                filasRecibidas = len(datosPorMinuto.index)
+                print("filasRecibidas al detalle de minuto: ", filasRecibidas)
+                volumenAcumulado = datosPorMinuto["Volume"].sum() * factorMultiplicador
+
+                # Para obtener el close y el adjclose, se toma el Close del último minuto hasta ahora
+                closeDelDia = datosUltimoMinuto['Close'].iloc[0]
+                adjCloseDelDia = datosUltimoMinuto['Close'].iloc[0]
+
+                # Se añade la fila creada para hoy, aunque el mercado siga abierto
+                filaParaHoyMercadoAbierto = {'date': ultimaFecha.strftime("%Y-%m-%d 00:00:00"),
+                                             'open': openPrimerMinuto,
+                                             'high': highMayorDelDia,
+                                             'low': lowMenorDelDia,
+                                             'close': closeDelDia,
+                                             'adjclose': adjCloseDelDia,
+                                             'volume': volumenAcumulado,
+                                             'ticker': ticker.upper()}
+                frame = frame.append(filaParaHoyMercadoAbierto, ignore_index=True)
+
+            else:
+                print(
+                    "ATENCIÓN: EL MERCADO TODAVÍA NO ESTÁ ABIERTO. Sólo se podrán tomar datos de ayer o antes. NO se recomienda la inversión!!!!!")
+
+            #############################
 
     return frame
 
