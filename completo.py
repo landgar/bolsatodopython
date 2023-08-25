@@ -36,15 +36,15 @@ from sklearn.model_selection import train_test_split
 
 # Para creación de modelo y predicción
 carpeta = "/home/t151521/Descargas/prueba/"
-descargarInternetParaGenerarModelo = False
+descargarInternetParaGenerarModelo = True
 
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 50
+cuantasEmpresas = 5
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 50
+PREDICCIONcuantasEmpresas = 5
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Para creación de modelo
@@ -59,7 +59,7 @@ PREDICCIONnombreFicheroCsvAvanzado = "PREDICCIONinfolimpioavanzadoTarget.csv"
 PREDICCIONNombreFicheroCSVDondeInvertir = "PREDICCIONdondeinvertir.csv"
 # Se toman xx días hacia atrás, hasta ayer (para poder calcular RSI y demás)
 PREDICCIONstartDate = date.today() - timedelta(days=200)
-PREDICCIONendDate = date.today() - timedelta(days=1)
+PREDICCIONendDate = date.today() - timedelta(days=0)
 
 #################################################
 #################################################
@@ -125,8 +125,7 @@ def _convert_to_numeric(s):
 
 
 def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
-             interval="1d", headers=default_headers
-             ):
+             interval="1d", headers=default_headers):
     '''Downloads historical stock price data into a pandas data frame.  Interval
        must be "1d", "1wk", "1mo", or "1m" for daily, weekly, monthly, or minute data.
        Intraday minute data is limited to 7 days.
@@ -180,6 +179,80 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
         if not index_as_date:
             frame = frame.reset_index()
             frame.rename(columns={"index": "date"}, inplace=True)
+
+    ############# INVENTAMOS EL DÍA DE HOY SI ES INCOMPLETO (MERCADO ABIERTO), ya que Yahoo Finance no nos lo dará ################
+    # Cuando la fecha de fin coincide con la fecha de hoy, debemos construir el close con el
+    # precio actual (minuto más reciente) y lo añadiremos al final del conjunto de datos
+    # Import package
+    import yfinance as yf
+
+    # Datos por minuto para el último día
+    datosPorMinuto = yf.download(tickers=ticker, period="1d", interval="1m")
+
+    if datosPorMinuto.empty:
+        # DEBUG:
+        print("De la empresa \"", ticker, "\" no se han podido obtener datos")
+
+    else:
+
+        # Se toma el último minuto de hoy (sólo saldrá durante el mercado abierto. Si no, sale lo de ayer)
+        # Por tanto, se recomienda ejecutar el programa sólo en mercado abierto, casi al cierre (para que el valor
+        # de close que vamos a estimar sea similar al precio de este último minuto)
+        datosUltimoMinuto = datosPorMinuto.tail(1)
+
+        # El índice es la fecha, así que se reconvierte como date en una columna más
+        datosUltimoMinuto = datosUltimoMinuto.reset_index()
+        datosUltimoMinuto.rename(columns={"index": "date"}, inplace=True)
+
+        # Sólo se añadirá tras la apertura del mercado. Si no, no aparecen datos de hoy. Esta condición se validará comprobando si los últimos datos que tenemos tienen la misma fecha que hoy
+        import time
+        hoy = time.strftime("%Y-%m-%d")  # Formato 2023-08-14
+
+        ultimaFecha = datosUltimoMinuto['Datetime'].iloc[0]
+        ultimaFechaTrozo = ultimaFecha.strftime("%Y-%m-%d")  # Formato 2023-08-14
+
+        DEPURAR=0
+        if DEPURAR==1 or ultimaFechaTrozo == hoy:
+            # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
+            print("ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h," +
+                  " ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
+
+            # Para obtener el Open del día, se toma el Open del primer minuto
+            openPrimerMinuto = datosPorMinuto['Open'].iloc[0]
+
+            # Para obtener el high del día, se toma el mayor valor hasta ahora
+            highMayorDelDia = datosPorMinuto['High'].max()
+
+            # Para obtener el low del día, se toma el menor valor hasta ahora
+            lowMenorDelDia = datosPorMinuto['Low'].min()
+
+            # Se toma el volumen acumulado en ese día, ampliado para lo estimado restante del día. Un día completo
+            # tiene 84 filas
+            filasRecibidas=len(datosPorMinuto.index)
+            volumenAcumulado=0
+            if filasRecibidas>0:
+                volumenAcumulado = datosPorMinuto["Volume"].sum()*(84/filasRecibidas)
+
+            # Para obtener el close y el adjclose, se toma el Close del último minuto hasta ahora
+            closeDelDia = datosUltimoMinuto['Close'].iloc[0]
+            adjCloseDelDia = datosUltimoMinuto['Close'].iloc[0]
+
+            # Se añade la fila creada para hoy, aunque el mercado siga abierto
+            filaParaHoyMercadoAbierto = {'date': ultimaFecha.strftime("%Y-%m-%d 00:00:00"),
+                                         'open': openPrimerMinuto,
+                                         'high': highMayorDelDia,
+                                         'low': lowMenorDelDia,
+                                         'close': closeDelDia,
+                                         'adjclose': adjCloseDelDia,
+                                         'volume': volumenAcumulado,
+                                         'ticker': ticker.upper()}
+            frame = frame.append(filaParaHoyMercadoAbierto, ignore_index=True)
+
+        else:
+            print("ATENCIÓN: EL MERCADO TODAVÍA NO ESTÁ ABIERTO. Sólo se podrán tomar datos de ayer o antes. " +
+                  "NO se recomienda la inversión!!!!!")
+
+        #############################
 
     return frame
 
@@ -1346,25 +1419,25 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirMACDsigydif(df)
     df = anadirMACDhist(df)
     df = anadirlagRelativa(df)
-    df = anadirFearAndGreed(df)
-    df = anadirEMARelativa(df)
-    df = anadirSMARelativa(df)
-    df = anadirHammerRangosRelativa(df)
-    df = anadirvwapRelativa(df)
-    df = anadirDistanciaAbollingerRelativa(df)
-    df = anadirATR(df)
-    df = anadirCCI(df)
-    df = anadirsupernovaTipoA(df)
-    df = anadirsupernovaTipoB(df)
-    df = anadirsupernovaTipoC(df)
-    df = anadirsupernovaTipoD(df)
-    df = anadirsupernovaTipoE(df)
-    df = anadirsupernovaTipoF(df)
-    df = anadiradl(df)
-    df = anadirstochastic_oscillator(df)
-    df = anadirVolumenRelativo(df)
-    df = anadirFeaturesJapanCompetition1(df)
-    df = anadirGapAcumulado(df)
+    # df = anadirFearAndGreed(df)
+    # df = anadirEMARelativa(df)
+    # df = anadirSMARelativa(df)
+    # df = anadirHammerRangosRelativa(df)
+    # df = anadirvwapRelativa(df)
+    # df = anadirDistanciaAbollingerRelativa(df)
+    # df = anadirATR(df)
+    # df = anadirCCI(df)
+    # df = anadirsupernovaTipoA(df)
+    # df = anadirsupernovaTipoB(df)
+    # df = anadirsupernovaTipoC(df)
+    # df = anadirsupernovaTipoD(df)
+    # df = anadirsupernovaTipoE(df)
+    # df = anadirsupernovaTipoF(df)
+    # df = anadiradl(df)
+    # df = anadirstochastic_oscillator(df)
+    # df = anadirVolumenRelativo(df)
+    # df = anadirFeaturesJapanCompetition1(df)
+    # df = anadirGapAcumulado(df)
 
     return df
 
@@ -2438,7 +2511,7 @@ def predecir(pathModelo, umbralProba=0.5, necesitaDescarga=True):
     # Se guardan las rentas en un fichero
     pathRentasDondeInvertir = carpeta + "rentasDondeInvertir-umbral-" + str(umbralProba) + ".txt"
     with open(pathRentasDondeInvertir, 'w') as f:
-        incrementos=datosValidacion_a_invertir_valid['INCREMENTO']
+        incrementos = datosValidacion_a_invertir_valid['INCREMENTO']
         df_string = incrementos.to_string()
         f.write(df_string)
         f.close()
