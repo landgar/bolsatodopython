@@ -29,7 +29,7 @@ from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
 
 # La siguiente línea se debe ejecutar en Kaggle
-#!pip install yfinance
+# !pip install yfinance
 
 #################################################
 #################################################
@@ -49,6 +49,9 @@ indiceComienzoListaEmpresas = 400
 # Para predicción
 PREDICCIONcuantasEmpresas = 10
 PREDICCIONindiceComienzoListaEmpresas = 1400
+
+# Poner a True si se quiere entrenar y predecir. A False si sólo predecir
+ENTRENAR = True
 
 # Para creación de modelo
 nombreFicheroCsvBasica = "infosucio.csv"
@@ -214,10 +217,11 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
         ultimaFecha = datosUltimoMinuto['Datetime'].iloc[0]
         ultimaFechaTrozo = ultimaFecha.strftime("%Y-%m-%d")  # Formato 2023-08-14
 
-        DEPURAR=0
-        if DEPURAR==1 or ultimaFechaTrozo == hoy:
+        DEPURAR = 0
+        if DEPURAR == 1 or ultimaFechaTrozo == hoy:
             # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
-            print("ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h, ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
+            print(
+                "ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h, ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
 
             # Para obtener el Open del día, se toma el Open del primer minuto
             openPrimerMinuto = datosPorMinuto['Open'].iloc[0]
@@ -228,10 +232,32 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             # Para obtener el low del día, se toma el menor valor hasta ahora
             lowMenorDelDia = datosPorMinuto['Low'].min()
 
-            # Se toma el volumen acumulado en ese día (se asume que estamos al final del día, con casi todo el volumen ejecutado)
+            # Se toma el volumen acumulado en ese día. Se estimará el volumen completo del día en función de la hora del último minuto
+            from datetime import datetime
+            # initialize the local time
+            horaActual = int(datetime.now().hour)
+
+            factorMultiplicador = 1
+            if horaActual == 1:
+                factorMultiplicador = 8
+            elif horaActual == 2:
+                factorMultiplicador = 4
+            elif horaActual == 3:
+                factorMultiplicador = 2.6
+            elif horaActual == 4:
+                factorMultiplicador = 2
+            elif horaActual == 5:
+                factorMultiplicador = 1.8
+            elif horaActual == 6:
+                factorMultiplicador = 1.3
+            elif horaActual == 7:
+                factorMultiplicador = 1.14
+            else:
+                factorMultiplicador = 1
+
             filasRecibidas = len(datosPorMinuto.index)
             print("filasRecibidas al detalle de minuto: ", filasRecibidas)
-            volumenAcumulado = datosPorMinuto["Volume"].sum()
+            volumenAcumulado = datosPorMinuto["Volume"].sum() * factorMultiplicador
 
             # Para obtener el close y el adjclose, se toma el Close del último minuto hasta ahora
             closeDelDia = datosUltimoMinuto['Close'].iloc[0]
@@ -249,7 +275,8 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             frame = frame.append(filaParaHoyMercadoAbierto, ignore_index=True)
 
         else:
-            print("ATENCIÓN: EL MERCADO TODAVÍA NO ESTÁ ABIERTO. Sólo se podrán tomar datos de ayer o antes. NO se recomienda la inversión!!!!!")
+            print(
+                "ATENCIÓN: EL MERCADO TODAVÍA NO ESTÁ ABIERTO. Sólo se podrán tomar datos de ayer o antes. NO se recomienda la inversión!!!!!")
 
         #############################
 
@@ -2540,13 +2567,15 @@ def fxn():
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     fxn()
-    #################################################
-    #################################################
-    # GENERADOR DE MODELO Y SU VALIDACIÓN
-    #################################################
-    #################################################
-    # Se genera el modelo (con validación interna)):
-    modelo = creaModelo(pathModelo, descargarInternetParaGenerarModelo=descargarInternetParaGenerarModelo)
+
+    if ENTRENAR:
+        #################################################
+        #################################################
+        # GENERADOR DE MODELO Y SU VALIDACIÓN
+        #################################################
+        #################################################
+        # Se genera el modelo (con validación interna)):
+        modelo = creaModelo(pathModelo, descargarInternetParaGenerarModelo=descargarInternetParaGenerarModelo)
 
     #################################################
     #################################################
@@ -2565,6 +2594,7 @@ with warnings.catch_warnings():
     # Se imprime la fecha y hora actual en Madrid
     import pytz
     from datetime import datetime
+
     # initialize the local time
     l_time = datetime.now()
     # Conversion of loctime - GMT
