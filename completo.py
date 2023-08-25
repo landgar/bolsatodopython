@@ -214,7 +214,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
         ultimaFecha = datosUltimoMinuto['Datetime'].iloc[0]
         ultimaFechaTrozo = ultimaFecha.strftime("%Y-%m-%d")  # Formato 2023-08-14
 
-        DEPURAR=0
+        DEPURAR=1
         if DEPURAR==1 or ultimaFechaTrozo == hoy:
             # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
             print("ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h," +
@@ -229,13 +229,10 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             # Para obtener el low del día, se toma el menor valor hasta ahora
             lowMenorDelDia = datosPorMinuto['Low'].min()
 
-            # Se toma el volumen acumulado en ese día, ampliado para lo estimado restante del día. Un día completo
-            # tiene 84 filas
-            filasRecibidas=len(datosPorMinuto.index)
+            # Se toma el volumen acumulado en ese día (se asume que estamos al final del día, con casi todo el volumen ejecutado)
+            filasRecibidas = len(datosPorMinuto.index)
             print("filasRecibidas al detalle de minuto: ", filasRecibidas)
-            volumenAcumulado=0
-            if filasRecibidas>0:
-                volumenAcumulado = datosPorMinuto["Volume"].sum()*(84/filasRecibidas)
+            volumenAcumulado = datosPorMinuto["Volume"].sum()
 
             # Para obtener el close y el adjclose, se toma el Close del último minuto hasta ahora
             closeDelDia = datosUltimoMinuto['Close'].iloc[0]
