@@ -28,6 +28,9 @@ from sklearn import metrics
 from sklearn.metrics import *
 from sklearn.model_selection import train_test_split
 
+# La siguiente línea se debe ejecutar en Kaggle
+#!pip install yfinance
+
 #################################################
 #################################################
 # PARÁMETROS
@@ -36,17 +39,15 @@ from sklearn.model_selection import train_test_split
 
 # Para creación de modelo y predicción
 carpeta = "/home/t151521/Descargas/prueba/"
-descargarInternetParaGenerarModelo = True
-# La siguiente línea se debe ejecutar en Kaggle
-#!pip install yfinance
+descargarInternetParaGenerarModelo = False
 
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 5
+cuantasEmpresas = 50
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 5
+PREDICCIONcuantasEmpresas = 50
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Para creación de modelo
@@ -1421,25 +1422,25 @@ def anadirParametrosAvanzados(dataframe):
     df = anadirMACDsigydif(df)
     df = anadirMACDhist(df)
     df = anadirlagRelativa(df)
-    # df = anadirFearAndGreed(df)
-    # df = anadirEMARelativa(df)
-    # df = anadirSMARelativa(df)
-    # df = anadirHammerRangosRelativa(df)
-    # df = anadirvwapRelativa(df)
-    # df = anadirDistanciaAbollingerRelativa(df)
-    # df = anadirATR(df)
-    # df = anadirCCI(df)
-    # df = anadirsupernovaTipoA(df)
-    # df = anadirsupernovaTipoB(df)
-    # df = anadirsupernovaTipoC(df)
-    # df = anadirsupernovaTipoD(df)
-    # df = anadirsupernovaTipoE(df)
-    # df = anadirsupernovaTipoF(df)
-    # df = anadiradl(df)
-    # df = anadirstochastic_oscillator(df)
-    # df = anadirVolumenRelativo(df)
-    # df = anadirFeaturesJapanCompetition1(df)
-    # df = anadirGapAcumulado(df)
+    df = anadirFearAndGreed(df)
+    df = anadirEMARelativa(df)
+    df = anadirSMARelativa(df)
+    df = anadirHammerRangosRelativa(df)
+    df = anadirvwapRelativa(df)
+    df = anadirDistanciaAbollingerRelativa(df)
+    df = anadirATR(df)
+    df = anadirCCI(df)
+    df = anadirsupernovaTipoA(df)
+    df = anadirsupernovaTipoB(df)
+    df = anadirsupernovaTipoC(df)
+    df = anadirsupernovaTipoD(df)
+    df = anadirsupernovaTipoE(df)
+    df = anadirsupernovaTipoF(df)
+    df = anadiradl(df)
+    df = anadirstochastic_oscillator(df)
+    df = anadirVolumenRelativo(df)
+    df = anadirFeaturesJapanCompetition1(df)
+    df = anadirGapAcumulado(df)
 
     return df
 
@@ -2564,10 +2565,17 @@ with warnings.catch_warnings():
     print("----------------------------------------------------------")
     print("--- COMIENZO DE PREDICCIÓN PARA INVERTIR DINERO REAL-----")
     print("----------------------------------------------------------")
+
+    # Se imprime la fecha y hora actual en Madrid
+    import pytz
     from datetime import datetime
-    now = datetime.now()
-    current_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-    print("INSTANTE DE EJECUCIÓN: ", current_time)
+    # initialize the local time
+    l_time = datetime.now()
+    # Conversion of loctime - GMT
+    g_timezone = pytz.timezone('Europe/Madrid')
+    g_time = l_time.astimezone(g_timezone)
+    print("INSTANTE DE EJECUCIÓN en MADRID: ", g_time)
+
     # Se predice:
     umbral = 0.8
     print("Predicción con umbral: " + str(umbral))
