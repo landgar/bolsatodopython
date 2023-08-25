@@ -217,8 +217,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
         DEPURAR=0
         if DEPURAR==1 or ultimaFechaTrozo == hoy:
             # Como estamos en mercado abierto, se añadirá los datos de hoy, aunque no estén completos como día finalizado. Por tanto, habrá que asumir el volumen con lo que hay, y la fecha de close como el precio actual
-            print("ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h," +
-                  " ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
+            print("ATENCIÓN: EL MERCADO ESTÁ ABIERTO o se ha cerrado y no son todavía las 23:59h, ASÍ QUE INVENTAREMOS LOS DATOS PARA HOY HASTA el último minuto conocido!. Se recomienda la inversión SÓLO cerca del cierre")
 
             # Para obtener el Open del día, se toma el Open del primer minuto
             openPrimerMinuto = datosPorMinuto['Open'].iloc[0]
@@ -250,8 +249,7 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
             frame = frame.append(filaParaHoyMercadoAbierto, ignore_index=True)
 
         else:
-            print("ATENCIÓN: EL MERCADO TODAVÍA NO ESTÁ ABIERTO. Sólo se podrán tomar datos de ayer o antes. " +
-                  "NO se recomienda la inversión!!!!!")
+            print("ATENCIÓN: EL MERCADO TODAVÍA NO ESTÁ ABIERTO. Sólo se podrán tomar datos de ayer o antes. NO se recomienda la inversión!!!!!")
 
         #############################
 
