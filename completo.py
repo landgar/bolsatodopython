@@ -37,6 +37,8 @@ from sklearn.model_selection import train_test_split
 # Para creación de modelo y predicción
 carpeta = "/home/t151521/Descargas/prueba/"
 descargarInternetParaGenerarModelo = True
+# La siguiente línea se debe ejecutar en Kaggle
+#!pip install yfinance
 
 # Para creación de modelo
 startDate = '01/01/2022'
