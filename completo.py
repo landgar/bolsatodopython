@@ -2562,6 +2562,10 @@ with warnings.catch_warnings():
     print("----------------------------------------------------------")
     print("--- COMIENZO DE PREDICCIÓN PARA INVERTIR DINERO REAL-----")
     print("----------------------------------------------------------")
+    from datetime import datetime
+    now = datetime.now()
+    current_time = now.strftime("%m/%d/%Y, %H:%M:%S")
+    print("INSTANTE DE EJECUCIÓN: ", current_time)
     # Se predice:
     umbral = 0.8
     print("Predicción con umbral: " + str(umbral))
