@@ -196,8 +196,8 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
     else:
         endDateString=end_date.strftime("%Y-%m-%d")
 
-    print("hoy: ", hoy)
-    print("end_date: ", endDateString)
+    # print("hoy: ", hoy)
+    # print("end_date: ", endDateString)
 
     if hoy == endDateString:
         print("INVENTAMOS EL DÍA DE HOY...")
@@ -269,8 +269,8 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
                     factorMultiplicador = 1
 
                 filasRecibidas = len(datosPorMinuto.index)
-                print("filasRecibidas al detalle de minuto: ", filasRecibidas)
-                print("factorMultiplicador: ", factorMultiplicador)
+                # print("filasRecibidas al detalle de minuto: ", filasRecibidas)
+                # print("factorMultiplicador: ", factorMultiplicador)
                 volumenAcumulado = datosPorMinuto["Volume"].sum() * factorMultiplicador
 
                 # Para obtener el close y el adjclose, se toma el Close del último minuto hasta ahora
@@ -288,8 +288,8 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
                                              'ticker': ticker.upper()}
                 frame = frame.append(filaParaHoyMercadoAbierto, ignore_index=True)
 
-                print("la fila inventada para hoy es: ")
-                print(filaParaHoyMercadoAbierto)
+                # print("la fila inventada para hoy es: ")
+                # print(filaParaHoyMercadoAbierto)
 
             else:
                 print(
@@ -1457,28 +1457,28 @@ def aleatorizarDatos(datos):
 def anadirParametrosAvanzados(dataframe):
     df = dataframe
 
-    df = anadirRSI(df)
-    df = anadirMACD(df)
-    df = anadirMACDsigydif(df)
-    df = anadirMACDhist(df)
-    df = anadirlagRelativa(df)
-    df = anadirFearAndGreed(df)
-    df = anadirEMARelativa(df)
-    df = anadirSMARelativa(df)
+    # df = anadirRSI(df)
+    # df = anadirMACD(df)
+    # df = anadirMACDsigydif(df)
+    # df = anadirMACDhist(df)
+    # df = anadirlagRelativa(df)
+    # df = anadirFearAndGreed(df)
+    # df = anadirEMARelativa(df)
+    # df = anadirSMARelativa(df)
     df = anadirHammerRangosRelativa(df)
-    df = anadirvwapRelativa(df)
+    # df = anadirvwapRelativa(df)
     df = anadirDistanciaAbollingerRelativa(df)
-    df = anadirATR(df)
-    df = anadirCCI(df)
-    df = anadirsupernovaTipoA(df)
-    df = anadirsupernovaTipoB(df)
-    df = anadirsupernovaTipoC(df)
-    df = anadirsupernovaTipoD(df)
-    df = anadirsupernovaTipoE(df)
+    # df = anadirATR(df)
+    # df = anadirCCI(df)
+    # df = anadirsupernovaTipoA(df)
+    # df = anadirsupernovaTipoB(df)
+    # df = anadirsupernovaTipoC(df)
+    # df = anadirsupernovaTipoD(df)
+    # df = anadirsupernovaTipoE(df)
     df = anadirsupernovaTipoF(df)
-    df = anadiradl(df)
-    df = anadirstochastic_oscillator(df)
-    df = anadirVolumenRelativo(df)
+    # df = anadiradl(df)
+    # df = anadirstochastic_oscillator(df)
+    # df = anadirVolumenRelativo(df)
     df = anadirFeaturesJapanCompetition1(df)
     df = anadirGapAcumulado(df)
 
@@ -2535,7 +2535,10 @@ def predecir(pathModelo, umbralProba=0.5, necesitaDescarga=True):
 
     # Se valida el modelo con datos independientes
     X_valid, y_valid = limpiaDatosParaUsarModelo(datos)
-    y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=umbralProba, analizarResultado=False)
+    y_pred_valid=[]
+    y_proba_valid=[]
+    if not X_valid.empty:
+        y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=umbralProba, analizarResultado=False)
 
     # Análisis de sólo las filas donde invertir
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
