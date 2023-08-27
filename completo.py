@@ -44,10 +44,10 @@ descargarInternetParaGenerarModelo = True
 # Para creación de modelo
 startDate = '01/01/2022'
 endDate = '31/12/2022'
-cuantasEmpresas = 10
+cuantasEmpresas = 20
 indiceComienzoListaEmpresas = 400
 # Para predicción
-PREDICCIONcuantasEmpresas = 10
+PREDICCIONcuantasEmpresas = 20
 PREDICCIONindiceComienzoListaEmpresas = 1400
 
 # Poner a True si se quiere entrenar y predecir. A False si sólo predecir
@@ -188,7 +188,8 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
 
     #############################
     # Lo siguiente es sólo en el caso de predecir, no de generar modelo. Es decir, si la fecha final es muy cercana.
-    # Además, cuando se entrena se pasa un string. Cuando se predice, un date
+    # Además, cuando se entrena se pasa un string. Cuando se predice, un date, con distintos formatos (/ o -).
+    # Con esto diferenciamos uno de otro
     import time
     hoy = time.strftime("%Y-%m-%d")  # Formato 2023-08-14
     if isinstance(end_date, str):
@@ -1457,28 +1458,28 @@ def aleatorizarDatos(datos):
 def anadirParametrosAvanzados(dataframe):
     df = dataframe
 
-    # df = anadirRSI(df)
-    # df = anadirMACD(df)
-    # df = anadirMACDsigydif(df)
-    # df = anadirMACDhist(df)
-    # df = anadirlagRelativa(df)
-    # df = anadirFearAndGreed(df)
-    # df = anadirEMARelativa(df)
-    # df = anadirSMARelativa(df)
+    df = anadirRSI(df)
+    df = anadirMACD(df)
+    df = anadirMACDsigydif(df)
+    df = anadirMACDhist(df)
+    df = anadirlagRelativa(df)
+    df = anadirFearAndGreed(df)
+    df = anadirEMARelativa(df)
+    df = anadirSMARelativa(df)
     df = anadirHammerRangosRelativa(df)
-    # df = anadirvwapRelativa(df)
+    df = anadirvwapRelativa(df)
     df = anadirDistanciaAbollingerRelativa(df)
-    # df = anadirATR(df)
-    # df = anadirCCI(df)
-    # df = anadirsupernovaTipoA(df)
-    # df = anadirsupernovaTipoB(df)
-    # df = anadirsupernovaTipoC(df)
-    # df = anadirsupernovaTipoD(df)
-    # df = anadirsupernovaTipoE(df)
+    df = anadirATR(df)
+    df = anadirCCI(df)
+    df = anadirsupernovaTipoA(df)
+    df = anadirsupernovaTipoB(df)
+    df = anadirsupernovaTipoC(df)
+    df = anadirsupernovaTipoD(df)
+    df = anadirsupernovaTipoE(df)
     df = anadirsupernovaTipoF(df)
-    # df = anadiradl(df)
-    # df = anadirstochastic_oscillator(df)
-    # df = anadirVolumenRelativo(df)
+    df = anadiradl(df)
+    df = anadirstochastic_oscillator(df)
+    df = anadirVolumenRelativo(df)
     df = anadirFeaturesJapanCompetition1(df)
     df = anadirGapAcumulado(df)
 
@@ -2249,7 +2250,7 @@ def computeadl(data: pd.DataFrame, high_col: str, low_col: str, close_col: str, 
     return adl
 
 
-# Calcula el Gap acumulado multiplicado (diferencia entre la apertura "open" del día n y el cierre "adjclose" del día n-1) sucedido en los días previos A y B.
+# Calcula el Gap acumulado multiplicado (diferencia entre la apertura "open" del día n y el cierre "adjclose" del día n+1 (más antiguoa med)) sucedido en los días previos A y B.
 def calculadoraGap(data, diasPreviosA=1, diasPreviosB=2, parametroA1="open", parametroA2="adjclose",
                    parametroB1="open", parametroB2="adjclose"):
     # Se toman los parámetros
@@ -2259,14 +2260,14 @@ def calculadoraGap(data, diasPreviosA=1, diasPreviosB=2, parametroA1="open", par
     b2 = data[parametroB2]
 
     a1Desplazado = a1.shift(diasPreviosA)
-    a2Desplazado = a2.shift(diasPreviosA - 1)
+    a2Desplazado = a2.shift(diasPreviosA + 1)
     b1Desplazado = b1.shift(diasPreviosB)
-    b2Desplazado = b2.shift(diasPreviosB - 1)
+    b2Desplazado = b2.shift(diasPreviosB + 1)
 
-    gapA = a1Desplazado - a2Desplazado
-    gapB = b1Desplazado - b2Desplazado
+    gapA = (a1Desplazado - a2Desplazado)/a2Desplazado
+    gapB = (b1Desplazado - b2Desplazado)/b2Desplazado
 
-    gapAcumulado = gapA + gapB
+    gapAcumulado = gapA * gapB
     return gapAcumulado
 
 
