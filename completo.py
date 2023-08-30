@@ -193,9 +193,9 @@ def get_data(ticker, start_date=None, end_date=None, index_as_date=True,
     import time
     hoy = time.strftime("%Y-%m-%d")  # Formato 2023-08-14
     if isinstance(end_date, str):
-        endDateString=end_date
+        endDateString = end_date
     else:
-        endDateString=end_date.strftime("%Y-%m-%d")
+        endDateString = end_date.strftime("%Y-%m-%d")
 
     # print("hoy: ", hoy)
     # print("end_date: ", endDateString)
@@ -1405,7 +1405,7 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 1
+    periodo = 2
 
     print("periodo = " + str(periodo))
 
@@ -1413,7 +1413,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=5, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
 
     return datos
 
@@ -1920,44 +1920,33 @@ def anadirVolumenRelativo(dataframe):
 def anadirFeaturesJapanCompetition1(dataframe):
     # https://www.kaggle.com/code/uioiuioi/2nd-place-solution
     df = dataframe
-    df["return5"] = df['adjclose'].pct_change(5)
-    df["return10"] = df['adjclose'].pct_change(10)
-    df["return20"] = df['adjclose'].pct_change(20)
-    df["return40"] = df['adjclose'].pct_change(40)
-    df["return60"] = df['adjclose'].pct_change(60)
-    df["volatility5"] = (np.log(df['adjclose'])).diff().rolling(5).std()
-    df["volatility10"] = (np.log(df['adjclose'])).diff().rolling(10).std()
-    df["volatility20"] = (np.log(df['adjclose'])).diff().rolling(20).std()
-    df["volatility40"] = (np.log(df['adjclose'])).diff().rolling(40).std()
-    df["volatility60"] = (np.log(df['adjclose'])).diff().rolling(60).std()
-    df["MA_gap5"] = df['adjclose'] / (df['adjclose'].rolling(5).mean())
-    df["MA_gap10"] = df['adjclose'] / (df['adjclose'].rolling(10).mean())
-    df["MA_gap20"] = df['adjclose'] / (df['adjclose'].rolling(20).mean())
-    df["MA_gap_40"] = df['adjclose'] / (df['adjclose'].rolling(40).mean())
-    df["MA_gap_60"] = df['adjclose'] / (df['adjclose'].rolling(60).mean())
+
+    periodo = [3, 4, 5, 10, 20, 40, 60]  # No se puede poner un valor inferior a 3
+    parametro = ['open', 'high', 'low', 'adjclose', 'volume']
+    for periodo_i in periodo:
+        for parametro_i in parametro:
+            nombreFeatureRe = "return-" + str(periodo_i) + "-" + parametro_i
+            nombreFeatureVol = "volatility-" + str(periodo_i) + "-" + parametro_i
+            nombreFeatureMaGap = "MA-gap-" + str(periodo_i) + "-" + parametro_i
+            df[nombreFeatureRe] = df[parametro_i].pct_change(periodo_i)
+            df[nombreFeatureVol] = (np.log(df[parametro_i])).diff().rolling(periodo_i).std()
+            df[nombreFeatureMaGap] = df[parametro_i] / (df[parametro_i].rolling(60).mean())
+
     return df
 
 
 def anadirGapAcumulado(dataframe):
     df = dataframe
     periodoA = [0, 1, 2, 3, 4]
-    periodoB = [0, 1, 2, 3, 4]
-    parametroA1 = ['open', 'high', 'adjclose']
-    parametroA2 = ['open', 'high', 'adjclose']
-    parametroB1 = ['open', 'high', 'adjclose']
-    parametroB2 = ['open', 'high', 'adjclose']
+    parametroA1 = ['open', 'high', 'low', 'adjclose', 'volume']
+    parametroA2 = ['open', 'high', 'low', 'adjclose', 'volume']
     for periodoA_i in periodoA:
-        for periodoB_i in periodoB:
-            for parametroA1_i in parametroA1:
-                for parametroA2_i in parametroA2:
-                    for parametroB1_i in parametroB1:
-                        for parametroB2_i in parametroB2:
-                            nombreFeature = "gapacum-" + str(periodoA_i) + "-" + str(
-                                periodoB_i) + "-" + parametroA1_i + "-" + parametroA2_i + "-" + parametroB1_i + "-" + parametroB2_i
-                            df[nombreFeature] = calculadoraGap(df, diasPreviosA=periodoA_i, diasPreviosB=periodoB_i,
-                                                               parametroA1=parametroA1_i,
-                                                               parametroA2=parametroA2_i,
-                                                               parametroB1=parametroB1_i, parametroB2=parametroB2_i)
+        for parametroA1_i in parametroA1:
+            for parametroA2_i in parametroA2:
+                nombreFeature = "gapacum-" + str(periodoA_i) + "-" + parametroA1_i + "-" + parametroA2_i
+                df[nombreFeature] = calculadoraGap(df, diasPreviosA=periodoA_i,
+                                                   parametroA1=parametroA1_i,
+                                                   parametroA2=parametroA2_i)
     return df
 
 
@@ -2250,24 +2239,17 @@ def computeadl(data: pd.DataFrame, high_col: str, low_col: str, close_col: str, 
     return adl
 
 
-# Calcula el Gap acumulado multiplicado (diferencia entre la apertura "open" del día n y el cierre "adjclose" del día n+1 (más antiguoa med)) sucedido en los días previos A y B.
-def calculadoraGap(data, diasPreviosA=1, diasPreviosB=2, parametroA1="open", parametroA2="adjclose",
-                   parametroB1="open", parametroB2="adjclose"):
+def calculadoraGap(data, diasPreviosA=1, parametroA1="open", parametroA2="adjclose"):
     # Se toman los parámetros
     a1 = data[parametroA1]
     a2 = data[parametroA2]
-    b1 = data[parametroB1]
-    b2 = data[parametroB2]
 
     a1Desplazado = a1.shift(diasPreviosA)
     a2Desplazado = a2.shift(diasPreviosA + 1)
-    b1Desplazado = b1.shift(diasPreviosB)
-    b2Desplazado = b2.shift(diasPreviosB + 1)
 
-    gapA = (a1Desplazado - a2Desplazado)/a2Desplazado
-    gapB = (b1Desplazado - b2Desplazado)/b2Desplazado
+    gap = (a1Desplazado - a2Desplazado) / a2Desplazado
 
-    gapAcumulado = gapA * gapB
+    gapAcumulado = gap
     return gapAcumulado
 
 
@@ -2536,10 +2518,11 @@ def predecir(pathModelo, umbralProba=0.5, necesitaDescarga=True):
 
     # Se valida el modelo con datos independientes
     X_valid, y_valid = limpiaDatosParaUsarModelo(datos)
-    y_pred_valid=[]
-    y_proba_valid=[]
+    y_pred_valid = []
+    y_proba_valid = []
     if not X_valid.empty:
-        y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=umbralProba, analizarResultado=False)
+        y_pred_valid, y_proba_valid = predictorConProba(modelo, X_valid, umbralProba=umbralProba,
+                                                        analizarResultado=False)
 
     # Análisis de sólo las filas donde invertir
     y_pred_a_invertir_valid = y_pred_valid[y_pred_valid == 1]
