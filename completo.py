@@ -1405,7 +1405,7 @@ def procesaEmpresa(datos):
     # Se añaden parámetros avanzados
     datos = anadirParametrosAvanzados(dataframe=datos)
 
-    periodo = 2
+    periodo = 3
 
     print("periodo = " + str(periodo))
 
@@ -1413,7 +1413,7 @@ def procesaEmpresa(datos):
     datos = anadirIncrementoEnPorcentaje(dataframe=datos, periodo=periodo)
 
     # Se añade el target
-    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=10, periodo=periodo)
+    datos = anadirTarget(dataframe=datos, minimoIncrementoEnPorcentaje=5, periodo=periodo)
 
     return datos
 
@@ -1921,7 +1921,7 @@ def anadirFeaturesJapanCompetition1(dataframe):
     # https://www.kaggle.com/code/uioiuioi/2nd-place-solution
     df = dataframe
 
-    periodo = [3, 4, 5, 10, 20, 40, 60]  # No se puede poner un valor inferior a 3
+    periodo = [10, 20, 40, 60]  # No se puede poner un valor inferior a 3
     parametro = ['open', 'high', 'low', 'adjclose', 'volume']
     for periodo_i in periodo:
         for parametro_i in parametro:
